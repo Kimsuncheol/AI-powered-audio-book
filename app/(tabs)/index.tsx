@@ -1,98 +1,244 @@
+import { useState } from 'react';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  TextInput,
+  FlatList,
+  Dimensions,
+} from 'react-native';
+import { Link } from 'expo-router';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/context/auth-context';
+import { MOCK_AUDIOBOOKS, formatDuration } from '@/data/mock-audiobooks';
+import { AudioBook } from '@/types/audiobook';
 
-export default function HomeScreen() {
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - 60) / 2; // 2 columns with padding
+
+export default function LibraryScreen() {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const { user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredBooks = MOCK_AUDIOBOOKS.filter(
+    (book) =>
+      book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      book.author.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const inputBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
+  const inputTextColor = colorScheme === 'dark' ? '#FFFFFF' : '#000000';
+
+  const renderBookCard = ({ item }: { item: AudioBook }) => (
+    <Link href={`/book/${item.id}`} asChild>
+      <Pressable style={styles.bookCard}>
+        <View style={styles.coverContainer}>
+          <Image source={{ uri: item.coverImage }} style={styles.coverImage} contentFit="cover" />
+          <View style={styles.ratingBadge}>
+            <IconSymbol size={12} name="star.fill" color="#FFD700" />
+            <ThemedText style={styles.ratingText}>{item.rating}</ThemedText>
+          </View>
+        </View>
+        <View style={styles.bookInfo}>
+          <ThemedText style={styles.bookTitle} numberOfLines={2}>
+            {item.title}
+          </ThemedText>
+          <ThemedText style={styles.bookAuthor} numberOfLines={1}>
+            {item.author}
+          </ThemedText>
+          <View style={styles.bookMeta}>
+            <IconSymbol size={14} name="clock" color={colors.icon} />
+            <ThemedText style={styles.duration}>{formatDuration(item.duration)}</ThemedText>
+          </View>
+        </View>
+      </Pressable>
+    </Link>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ThemedView style={styles.container}>
+      <View style={styles.header}>
+        <View>
+          <ThemedText type="title" style={styles.greeting}>
+            Hello, {user?.displayName || 'Reader'}!
+          </ThemedText>
+          <ThemedText style={styles.subtitle}>What will you listen to today?</ThemedText>
+        </View>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+      <View style={[styles.searchContainer, { backgroundColor: inputBgColor }]}>
+        <IconSymbol size={20} name="magnifyingglass" color={colors.icon} />
+        <TextInput
+          style={[styles.searchInput, { color: inputTextColor }]}
+          placeholder="Search books or authors..."
+          placeholderTextColor={colorScheme === 'dark' ? '#8E8E93' : '#999'}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')}>
+            <IconSymbol size={20} name="xmark.circle.fill" color={colors.icon} />
+          </Pressable>
+        )}
+      </View>
+
+      <View style={styles.sectionHeader}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          My Library
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <ThemedText style={styles.bookCount}>{filteredBooks.length} books</ThemedText>
+      </View>
+
+      <FlatList
+        data={filteredBooks}
+        renderItem={renderBookCard}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <IconSymbol size={60} name="book" color={colors.icon} />
+            <ThemedText style={styles.emptyText}>No books found</ThemedText>
+            <ThemedText style={styles.emptySubtext}>
+              Try adjusting your search query
+            </ThemedText>
+          </View>
+        }
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  header: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 16,
+  },
+  greeting: {
+    fontSize: 28,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginHorizontal: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 10,
   },
-  stepContainer: {
-    gap: 8,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+  },
+  bookCount: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  listContent: {
+    paddingHorizontal: 10,
+    paddingBottom: 20,
+  },
+  row: {
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  bookCard: {
+    width: CARD_WIDTH,
+  },
+  coverContainer: {
+    position: 'relative',
+    width: CARD_WIDTH,
+    height: CARD_WIDTH * 1.4,
+    borderRadius: 12,
+    overflow: 'hidden',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  ratingBadge: {
     position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  bookInfo: {
+    gap: 4,
+  },
+  bookTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  bookAuthor: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  bookMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  duration: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: 4,
   },
 });
