@@ -3,10 +3,10 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
-import { useAuth } from "@/context/auth-context";
 import { useAudioPlayer } from "@/context/audio-player-context";
+import { useAuth } from "@/context/auth-context";
 import { useFavorites } from "@/context/favorites-context";
-import { useReviews, Review } from "@/context/reviews-context";
+import { useReviews } from "@/context/reviews-context";
 import { MOCK_AUDIOBOOKS, formatDuration } from "@/data/mock-audiobooks";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AudioBook } from "@/types/audiobook";
@@ -34,15 +34,18 @@ export default function BookDetailScreen() {
   const { isGuest } = useAuth();
   const { loadBook } = useAudioPlayer();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
-  const { getReviewsForBook, getAverageRating, addReview, hasUserReviewed } = useReviews();
+  const { getReviewsForBook, getAverageRating, addReview, hasUserReviewed } =
+    useReviews();
 
   const [book, setBook] = useState<AudioBook | null>(null);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
-  const [reviewText, setReviewText] = useState('');
+  const [reviewText, setReviewText] = useState("");
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [signUpFeature, setSignUpFeature] = useState<'favorites' | 'fullPlayback' | 'reviews' | 'download' | 'progress'>('favorites');
+  const [signUpFeature, setSignUpFeature] = useState<
+    "favorites" | "fullPlayback" | "reviews" | "download" | "progress"
+  >("favorites");
 
   useEffect(() => {
     // Find the book by ID
@@ -88,7 +91,7 @@ export default function BookDetailScreen() {
 
   const handleDownload = () => {
     if (isGuest) {
-      setSignUpFeature('download');
+      setSignUpFeature("download");
       setShowSignUpModal(true);
       return;
     }
@@ -101,12 +104,14 @@ export default function BookDetailScreen() {
 
   const isFavorite = book ? checkFavorite(book.id) : false;
   const bookReviews = book ? getReviewsForBook(book.id) : [];
-  const ratingInfo = book ? getAverageRating(book.id) : { average: 0, count: 0 };
+  const ratingInfo = book
+    ? getAverageRating(book.id)
+    : { average: 0, count: 0 };
   const alreadyReviewed = book ? hasUserReviewed(book.id) : false;
 
   const handleToggleFavorite = () => {
     if (isGuest) {
-      setSignUpFeature('favorites');
+      setSignUpFeature("favorites");
       setShowSignUpModal(true);
       return;
     }
@@ -115,7 +120,7 @@ export default function BookDetailScreen() {
 
   const handleWriteReview = () => {
     if (isGuest) {
-      setSignUpFeature('reviews');
+      setSignUpFeature("reviews");
       setShowSignUpModal(true);
       return;
     }
@@ -124,23 +129,23 @@ export default function BookDetailScreen() {
 
   const handleSubmitReview = () => {
     if (!reviewText.trim()) {
-      Alert.alert('Error', 'Please write a review');
+      Alert.alert("Error", "Please write a review");
       return;
     }
     if (book) {
       addReview(book.id, reviewRating, reviewText.trim());
       setShowReviewModal(false);
-      setReviewText('');
+      setReviewText("");
       setReviewRating(5);
-      Alert.alert('Thank you!', 'Your review has been submitted');
+      Alert.alert("Thank you!", "Your review has been submitted");
     }
   };
 
   const formatTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const days = Math.floor(diff / 86400000);
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Yesterday';
+    if (days === 0) return "Today";
+    if (days === 1) return "Yesterday";
     if (days < 7) return `${days} days ago`;
     if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
     return `${Math.floor(days / 30)} months ago`;
@@ -373,7 +378,12 @@ export default function BookDetailScreen() {
                       key={star}
                       size={16}
                       name={
-                        star <= Math.floor(ratingInfo.count > 0 ? ratingInfo.average : book.rating)
+                        star <=
+                        Math.floor(
+                          ratingInfo.count > 0
+                            ? ratingInfo.average
+                            : book.rating,
+                        )
                           ? "star.fill"
                           : "star"
                       }
@@ -382,7 +392,9 @@ export default function BookDetailScreen() {
                   ))}
                 </View>
                 <ThemedText style={styles.ratingCount}>
-                  {ratingInfo.count > 0 ? `${ratingInfo.count} reviews` : 'No reviews yet'}
+                  {ratingInfo.count > 0
+                    ? `${ratingInfo.count} reviews`
+                    : "No reviews yet"}
                 </ThemedText>
               </View>
               {!alreadyReviewed && (
@@ -401,7 +413,10 @@ export default function BookDetailScreen() {
             </View>
 
             {bookReviews.map((review) => (
-              <View key={review.id} style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
+              <View
+                key={review.id}
+                style={[styles.reviewCard, { backgroundColor: cardBgColor }]}
+              >
                 <View style={styles.reviewHeader}>
                   <View>
                     <ThemedText style={styles.reviewAuthor}>
@@ -418,17 +433,21 @@ export default function BookDetailScreen() {
                       ))}
                     </View>
                   </View>
-                  <ThemedText style={styles.reviewDate}>{formatTimeAgo(review.createdAt)}</ThemedText>
+                  <ThemedText style={styles.reviewDate}>
+                    {formatTimeAgo(review.createdAt)}
+                  </ThemedText>
                 </View>
-                <ThemedText style={styles.reviewText}>
-                  {review.text}
-                </ThemedText>
+                <ThemedText style={styles.reviewText}>{review.text}</ThemedText>
               </View>
             ))}
 
             {bookReviews.length === 0 && (
-              <View style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
-                <ThemedText style={[styles.reviewText, { textAlign: 'center' }]}>
+              <View
+                style={[styles.reviewCard, { backgroundColor: cardBgColor }]}
+              >
+                <ThemedText
+                  style={[styles.reviewText, { textAlign: "center" }]}
+                >
                   No reviews yet. Be the first to review!
                 </ThemedText>
               </View>
@@ -445,11 +464,23 @@ export default function BookDetailScreen() {
             onRequestClose={() => setShowReviewModal(false)}
           >
             <View style={styles.modalOverlay}>
-              <View style={[styles.modalContent, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#FFFFFF' }]}>
+              <View
+                style={[
+                  styles.modalContent,
+                  {
+                    backgroundColor:
+                      colorScheme === "dark" ? "#1C1C1E" : "#FFFFFF",
+                  },
+                ]}
+              >
                 <View style={styles.modalHeader}>
                   <ThemedText type="subtitle">Write a Review</ThemedText>
                   <Pressable onPress={() => setShowReviewModal(false)}>
-                    <IconSymbol size={24} name="xmark.circle.fill" color={colors.icon} />
+                    <IconSymbol
+                      size={24}
+                      name="xmark.circle.fill"
+                      color={colors.icon}
+                    />
                   </Pressable>
                 </View>
 
@@ -469,12 +500,15 @@ export default function BookDetailScreen() {
                   style={[
                     styles.reviewInput,
                     {
-                      backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F2F2F7',
-                      color: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
+                      backgroundColor:
+                        colorScheme === "dark" ? "#2C2C2E" : "#F2F2F7",
+                      color: colorScheme === "dark" ? "#FFFFFF" : "#000000",
                     },
                   ]}
                   placeholder="Share your thoughts about this audiobook..."
-                  placeholderTextColor={colorScheme === 'dark' ? '#8E8E93' : '#999'}
+                  placeholderTextColor={
+                    colorScheme === "dark" ? "#8E8E93" : "#999"
+                  }
                   multiline
                   numberOfLines={5}
                   textAlignVertical="top"
@@ -483,10 +517,15 @@ export default function BookDetailScreen() {
                 />
 
                 <Pressable
-                  style={[styles.submitReviewButton, { backgroundColor: colors.tint }]}
+                  style={[
+                    styles.submitReviewButton,
+                    { backgroundColor: colors.tint },
+                  ]}
                   onPress={handleSubmitReview}
                 >
-                  <ThemedText style={styles.submitReviewText}>Submit Review</ThemedText>
+                  <ThemedText style={styles.submitReviewText}>
+                    Submit Review
+                  </ThemedText>
                 </Pressable>
               </View>
             </View>
