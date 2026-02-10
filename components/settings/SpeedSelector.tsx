@@ -20,7 +20,12 @@ export function SpeedSelector({
   cardBgColor,
 }: SpeedSelectorProps) {
   const theme = useColorScheme();
-  const textColor = theme === "dark" ? "#FFFFFF" : "#000000";
+
+  // Unselected: semi-transparent tint background with theme text
+  // Selected: full tint background with white text
+  const unselectedBgColor =
+    theme === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(10, 126, 164, 0.1)";
+  const textColor = theme === "dark" ? "#000000" : "#FFFFFF";
 
   return (
     <View style={styles.speedGrid}>
@@ -29,7 +34,8 @@ export function SpeedSelector({
           key={rate}
           style={[
             styles.speedButton,
-            { backgroundColor: cardBgColor },
+            { backgroundColor: unselectedBgColor },
+
             currentRate === rate && {
               backgroundColor: colors.tint,
             },
@@ -39,8 +45,7 @@ export function SpeedSelector({
           <ThemedText
             style={[
               styles.speedButtonText,
-              currentRate === rate && styles.speedButtonTextActive,
-              { color: textColor },
+              currentRate === rate && { color: textColor },
             ]}
           >
             {rate}x
@@ -65,8 +70,5 @@ const styles = StyleSheet.create({
   speedButtonText: {
     fontSize: 16,
     fontWeight: "600",
-  },
-  speedButtonTextActive: {
-    color: "#FFFFFF",
   },
 });

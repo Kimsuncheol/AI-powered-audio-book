@@ -29,7 +29,6 @@ export function AutoPlaySettingsSection({
   return (
     <View>
       <SettingToggleItem
-        icon="play.circle.fill"
         label="Auto-Play Next Chapter"
         description="Automatically play next chapter when current ends"
         value={autoPlay.autoPlayNextChapter}
@@ -39,7 +38,6 @@ export function AutoPlaySettingsSection({
       />
 
       <SettingToggleItem
-        icon="bluetooth"
         label="Auto-Play on Bluetooth"
         description="Start playback when Bluetooth device connects"
         value={autoPlay.autoPlayOnBluetooth}
@@ -49,7 +47,6 @@ export function AutoPlaySettingsSection({
       />
 
       <SettingToggleItem
-        icon="headphones"
         label="Auto-Play on Headphones"
         description="Start playback when headphones are plugged in"
         value={autoPlay.autoPlayOnHeadphones}
@@ -59,7 +56,6 @@ export function AutoPlaySettingsSection({
       />
 
       <SettingToggleItem
-        icon="arrow.clockwise"
         label="Auto-Resume on Return"
         description="Continue playback when returning to app"
         value={autoPlay.autoResumeOnReturn}
@@ -69,7 +65,6 @@ export function AutoPlaySettingsSection({
       />
 
       <SettingToggleItem
-        icon="forward.end.fill"
         label="Continue Across Books"
         description="Auto-play next book in queue when finished"
         value={autoPlay.continueAcrossBooks}

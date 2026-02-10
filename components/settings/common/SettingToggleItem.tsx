@@ -1,9 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { StyleSheet, Switch, View } from "react-native";
 
 interface SettingToggleItemProps {
-  icon: string;
   label: string;
   description: string;
   value: boolean;
@@ -16,7 +14,6 @@ interface SettingToggleItemProps {
 }
 
 export function SettingToggleItem({
-  icon,
   label,
   description,
   value,
@@ -27,7 +24,6 @@ export function SettingToggleItem({
   return (
     <View style={[styles.settingItem, { backgroundColor: cardBgColor }]}>
       <View style={styles.settingLeft}>
-        <IconSymbol size={24} name={icon} color={colors.icon} />
         <View style={styles.settingText}>
           <ThemedText style={styles.settingLabel}>{label}</ThemedText>
           <ThemedText style={styles.settingDescription}>
