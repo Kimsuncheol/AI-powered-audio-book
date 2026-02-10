@@ -5,7 +5,6 @@ import { ChapterListPlayer } from "@/components/player/ChapterListPlayer";
 import { PlaybackControls } from "@/components/player/PlaybackControls";
 import { PlayerHeader } from "@/components/player/PlayerHeader";
 import { ProgressSlider } from "@/components/player/ProgressSlider";
-import { SecondaryControls } from "@/components/player/SecondaryControls";
 import { SleepTimerMenu } from "@/components/player/SleepTimerMenu";
 import { PlaybackSettingsModal } from "@/components/settings/PlaybackSettingsModal";
 import { ThemedText } from "@/components/themed-text";
@@ -36,7 +35,6 @@ export default function PlayerScreen() {
     seekTo,
     setPlaybackRate,
     setSleepTimer,
-    cancelSleepTimer,
   } = useAudioPlayer();
 
   const [showPlaybackSettings, setShowPlaybackSettings] = useState(false);
@@ -78,11 +76,6 @@ export default function PlayerScreen() {
     setSleepTimer(minutes);
     setShowSleepTimer(false);
     Alert.alert("Sleep Timer Set", `Playback will stop in ${minutes} minutes`);
-  };
-
-  const handleCancelSleepTimer = () => {
-    cancelSleepTimer();
-    Alert.alert("Sleep Timer Cancelled");
   };
 
   const handleGuestChapterLimit = () => {
@@ -161,19 +154,6 @@ export default function PlayerScreen() {
             chapterIndex={playbackState.currentChapterIndex}
             onGuestLimit={handleGuestChapterLimit}
             colors={colors}
-          />
-
-          <SecondaryControls
-            isSleepTimerActive={playbackState.isSleepTimerActive}
-            onToggleSleepTimer={() => {
-              if (playbackState.isSleepTimerActive) {
-                handleCancelSleepTimer();
-              } else {
-                setShowSleepTimer(!showSleepTimer);
-              }
-            }}
-            colors={colors}
-            cardBgColor={cardBgColor}
           />
 
           <PlaybackSettingsModal
