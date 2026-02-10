@@ -3,15 +3,17 @@ import { AuthFooter } from "@/components/auth/AuthFooter";
 import { AuthHeader } from "@/components/auth/AuthHeader";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { RememberMeCheckbox } from "@/components/auth/RememberMeCheckbox";
 import { ThemedView } from "@/components/themed-view";
 import { auth, db } from "@/config/firebase";
 import { useAuth } from "@/context/auth-context";
 import { UserProfile } from "@/types/user";
 import { getRoleBasedRoute } from "@/utils/navigation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { User, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,12 +23,45 @@ import {
   View,
 } from "react-native";
 
+const REMEMBER_EMAIL_KEY = "@auth:remember_email";
+
 export default function LoginScreen() {
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Load saved email on mount
+  useEffect(() => {
+    const loadSavedEmail = async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem(REMEMBER_EMAIL_KEY);
+        if (savedEmail) {
+          setEmail(savedEmail);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error("Failed to load saved email:", error);
+      }
+    };
+    loadSavedEmail();
+  }, []);
+
+  const handleRememberMeToggle = async () => {
+    const newValue = !rememberMe;
+    setRememberMe(newValue);
+
+    if (!newValue) {
+      // Clear saved email when unchecking
+      try {
+        await AsyncStorage.removeItem(REMEMBER_EMAIL_KEY);
+      } catch (error) {
+        console.error("Failed to clear saved email:", error);
+      }
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -36,6 +71,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      // Save email if remember me is checked
+      if (rememberMe) {
+        await AsyncStorage.setItem(REMEMBER_EMAIL_KEY, email);
+      }
+
       await signIn(email, password);
 
       // Wait a bit for auth state to update
@@ -94,6 +134,11 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               placeholder="Enter your password"
               autoComplete="password"
+            />
+
+            <RememberMeCheckbox
+              checked={rememberMe}
+              onToggle={handleRememberMeToggle}
             />
 
             <AuthButton onPress={handleLogin} loading={loading}>

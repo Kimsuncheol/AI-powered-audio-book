@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
   },
   passwordContainer: {
     position: "relative",
+    width: "100%",
   },
   passwordInput: {
     paddingRight: 50,
@@ -83,7 +84,9 @@ const styles = StyleSheet.create({
   eyeIcon: {
     position: "absolute",
     right: 16,
-    top: 16,
+    top: "50%",
+    transform: [{ translateY: -10 }],
     padding: 4,
+    zIndex: 1,
   },
 });
