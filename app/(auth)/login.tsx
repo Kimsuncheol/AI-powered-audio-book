@@ -22,6 +22,7 @@ import {
   StyleSheet,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const REMEMBER_EMAIL_KEY = "@auth:remember_email";
 
@@ -108,51 +109,53 @@ export default function LoginScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardView}
         >
-          <AuthHeader title="Welcome Back" subtitle="Log in to continue" />
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            <AuthHeader title="Welcome Back" subtitle="Log in to continue" />
 
-          <View style={styles.form}>
-            <AuthInput
-              label="Email"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
+            <View style={styles.form}>
+              <AuthInput
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                autoComplete="email"
+              />
 
-            <PasswordInput
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Enter your password"
-              autoComplete="password"
-            />
+              <PasswordInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Enter your password"
+                autoComplete="password"
+              />
 
-            <RememberMeCheckbox
-              checked={rememberMe}
-              onToggle={handleRememberMeToggle}
-            />
+              <RememberMeCheckbox
+                checked={rememberMe}
+                onToggle={handleRememberMeToggle}
+              />
 
-            <AuthButton onPress={handleLogin} loading={loading}>
-              {loading ? "Logging in..." : "Log In"}
-            </AuthButton>
+              <AuthButton onPress={handleLogin} loading={loading}>
+                {loading ? "Logging in..." : "Log In"}
+              </AuthButton>
 
-            <AuthFooter
-              text="Don't have an account?"
-              linkText="Sign Up"
-              linkHref="/(auth)/sign-up"
-            />
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+              <AuthFooter
+                text="Don't have an account?"
+                linkText="Sign Up"
+                linkHref="/(auth)/sign-up"
+              />
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ThemedView>
   );
 }

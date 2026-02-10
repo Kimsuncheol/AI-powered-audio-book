@@ -1,39 +1,48 @@
-import { useState, useEffect } from 'react';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { isOpenAIConfigured } from "@/config/openai";
+import { Colors } from "@/constants/theme";
+import { MOCK_AUDIOBOOKS, formatDuration } from "@/data/mock-audiobooks";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { aiService } from "@/services/ai-service";
+import { AudioBook } from "@/types/audiobook";
+import { Image } from "expo-image";
+import { Link } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Dimensions,
+  Pressable,
+  ScrollView,
   StyleSheet,
   View,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  ActivityIndicator,
-} from 'react-native';
-import { Link } from 'expo-router';
-import { Image } from 'expo-image';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MOCK_AUDIOBOOKS, formatDuration } from '@/data/mock-audiobooks';
-import { AudioBook } from '@/types/audiobook';
-import { aiService } from '@/services/ai-service';
-import { isOpenAIConfigured } from '@/config/openai';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - 60) / 3; // 3 columns for compact view
 
 export default function DiscoverScreen() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = Colors[colorScheme ?? "light"];
 
-  const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [selectedGenre, setSelectedGenre] = useState<string>("All");
   const [aiRecommendations, setAiRecommendations] = useState<AudioBook[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
-  const genres = ['All', 'Classic', 'Fiction', 'Romance', 'Horror', 'Mystery', 'Fantasy'];
+  const genres = [
+    "All",
+    "Classic",
+    "Fiction",
+    "Romance",
+    "Horror",
+    "Mystery",
+    "Fantasy",
+  ];
 
   const filteredBooks =
-    selectedGenre === 'All'
+    selectedGenre === "All"
       ? MOCK_AUDIOBOOKS
       : MOCK_AUDIOBOOKS.filter((book) => book.genre.includes(selectedGenre));
 
@@ -52,25 +61,29 @@ export default function DiscoverScreen() {
 
     setLoadingRecommendations(true);
     try {
-      const userPreferences = ['Classic', 'Fiction'];
+      const userPreferences = ["Classic", "Fiction"];
       const recommendations = await aiService.getPersonalizedRecommendations(
         userPreferences,
-        MOCK_AUDIOBOOKS
+        MOCK_AUDIOBOOKS,
       );
       setAiRecommendations(recommendations);
     } catch (error: any) {
-      console.error('Error loading AI recommendations:', error);
+      console.error("Error loading AI recommendations:", error);
     } finally {
       setLoadingRecommendations(false);
     }
   };
 
-  const cardBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
+  const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
 
   const renderCompactBookCard = (book: AudioBook) => (
     <Link key={book.id} href={`/book/${book.id}`} asChild>
       <Pressable style={styles.compactCard}>
-        <Image source={{ uri: book.coverImage }} style={styles.compactCover} contentFit="cover" />
+        <Image
+          source={{ uri: book.coverImage }}
+          style={styles.compactCover}
+          contentFit="cover"
+        />
         <View style={styles.compactInfo}>
           <ThemedText style={styles.compactTitle} numberOfLines={2}>
             {book.title}
@@ -85,8 +98,14 @@ export default function DiscoverScreen() {
 
   const renderFeaturedBookCard = (book: AudioBook) => (
     <Link key={book.id} href={`/book/${book.id}`} asChild>
-      <Pressable style={[styles.featuredCard, { backgroundColor: cardBgColor }]}>
-        <Image source={{ uri: book.coverImage }} style={styles.featuredCover} contentFit="cover" />
+      <Pressable
+        style={[styles.featuredCard, { backgroundColor: cardBgColor }]}
+      >
+        <Image
+          source={{ uri: book.coverImage }}
+          style={styles.featuredCover}
+          contentFit="cover"
+        />
         <View style={styles.featuredInfo}>
           <ThemedText style={styles.featuredTitle} numberOfLines={2}>
             {book.title}
@@ -110,103 +129,134 @@ export default function DiscoverScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            Discover
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>Find your next great audiobook</ThemedText>
-        </View>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <ThemedText type="title" style={styles.title}>
+              Discover
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Find your next great audiobook
+            </ThemedText>
+          </View>
 
-        {/* AI Recommendations Section */}
-        {isOpenAIConfigured() && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleRow}>
-                <IconSymbol size={20} name="sparkles" color={colors.tint} />
-                <ThemedText type="subtitle" style={styles.sectionTitle}>
-                  AI Picks For You
-                </ThemedText>
+          {/* AI Recommendations Section */}
+          {isOpenAIConfigured() && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={styles.sectionTitleRow}>
+                  <IconSymbol size={20} name="sparkles" color={colors.tint} />
+                  <ThemedText type="subtitle" style={styles.sectionTitle}>
+                    AI Picks For You
+                  </ThemedText>
+                </View>
+                {!loadingRecommendations && aiRecommendations.length === 0 && (
+                  <Pressable onPress={loadAIRecommendations}>
+                    <IconSymbol
+                      size={20}
+                      name="arrow.clockwise"
+                      color={colors.tint}
+                    />
+                  </Pressable>
+                )}
               </View>
-              {!loadingRecommendations && aiRecommendations.length === 0 && (
-                <Pressable onPress={loadAIRecommendations}>
-                  <IconSymbol size={20} name="arrow.clockwise" color={colors.tint} />
+
+              {loadingRecommendations ? (
+                <View
+                  style={[styles.loadingCard, { backgroundColor: cardBgColor }]}
+                >
+                  <ActivityIndicator size="large" color={colors.tint} />
+                  <ThemedText style={styles.loadingText}>
+                    Generating personalized recommendations...
+                  </ThemedText>
+                </View>
+              ) : aiRecommendations.length > 0 ? (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.horizontal}
+                >
+                  {aiRecommendations.map(renderFeaturedBookCard)}
+                </ScrollView>
+              ) : (
+                <Pressable
+                  style={[styles.emptyAICard, { backgroundColor: cardBgColor }]}
+                  onPress={loadAIRecommendations}
+                >
+                  <IconSymbol
+                    size={32}
+                    name="wand.and.stars"
+                    color={colors.icon}
+                  />
+                  <ThemedText style={styles.emptyAIText}>
+                    Tap to get AI recommendations
+                  </ThemedText>
                 </Pressable>
               )}
             </View>
+          )}
 
-            {loadingRecommendations ? (
-              <View style={[styles.loadingCard, { backgroundColor: cardBgColor }]}>
-                <ActivityIndicator size="large" color={colors.tint} />
-                <ThemedText style={styles.loadingText}>
-                  Generating personalized recommendations...
+          {/* Top Rated Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <IconSymbol size={20} name="star.fill" color="#FFD700" />
+                <ThemedText type="subtitle" style={styles.sectionTitle}>
+                  Top Rated
                 </ThemedText>
               </View>
-            ) : aiRecommendations.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontal}>
-                {aiRecommendations.map(renderFeaturedBookCard)}
-              </ScrollView>
-            ) : (
-              <Pressable
-                style={[styles.emptyAICard, { backgroundColor: cardBgColor }]}
-                onPress={loadAIRecommendations}>
-                <IconSymbol size={32} name="wand.and.stars" color={colors.icon} />
-                <ThemedText style={styles.emptyAIText}>Tap to get AI recommendations</ThemedText>
-              </Pressable>
-            )}
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.horizontal}
+            >
+              {topRatedBooks.map(renderFeaturedBookCard)}
+            </ScrollView>
           </View>
-        )}
 
-        {/* Top Rated Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <IconSymbol size={20} name="star.fill" color="#FFD700" />
-              <ThemedText type="subtitle" style={styles.sectionTitle}>
-                Top Rated
-              </ThemedText>
+          {/* Browse by Genre */}
+          <View style={styles.section}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Browse by Genre
+            </ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.genreScroll}
+              contentContainerStyle={styles.genreScrollContent}
+            >
+              {genres.map((genre) => (
+                <Pressable
+                  key={genre}
+                  style={[
+                    styles.genreChip,
+                    selectedGenre === genre && { backgroundColor: colors.tint },
+                    selectedGenre !== genre && { backgroundColor: cardBgColor },
+                  ]}
+                  onPress={() => setSelectedGenre(genre)}
+                >
+                  <ThemedText
+                    style={[
+                      styles.genreChipText,
+                      selectedGenre === genre && styles.genreChipTextActive,
+                    ]}
+                  >
+                    {genre}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </ScrollView>
+
+            <View style={styles.compactGrid}>
+              {filteredBooks.map(renderCompactBookCard)}
             </View>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontal}>
-            {topRatedBooks.map(renderFeaturedBookCard)}
-          </ScrollView>
-        </View>
-
-        {/* Browse by Genre */}
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Browse by Genre
-          </ThemedText>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.genreScroll}
-            contentContainerStyle={styles.genreScrollContent}>
-            {genres.map((genre) => (
-              <Pressable
-                key={genre}
-                style={[
-                  styles.genreChip,
-                  selectedGenre === genre && { backgroundColor: colors.tint },
-                  selectedGenre !== genre && { backgroundColor: cardBgColor },
-                ]}
-                onPress={() => setSelectedGenre(genre)}>
-                <ThemedText
-                  style={[
-                    styles.genreChipText,
-                    selectedGenre === genre && styles.genreChipTextActive,
-                  ]}>
-                  {genre}
-                </ThemedText>
-              </Pressable>
-            ))}
-          </ScrollView>
-
-          <View style={styles.compactGrid}>
-            {filteredBooks.map(renderCompactBookCard)}
-          </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -220,7 +270,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 16,
   },
   title: {
@@ -235,15 +285,15 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 16,
   },
   sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   sectionTitle: {
@@ -256,27 +306,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     padding: 32,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   loadingText: {
-    textAlign: 'center',
+    textAlign: "center",
     opacity: 0.7,
   },
   emptyAICard: {
     marginHorizontal: 20,
     padding: 32,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
   },
   emptyAIText: {
-    textAlign: 'center',
+    textAlign: "center",
     opacity: 0.7,
   },
   featuredCard: {
     width: width * 0.7,
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
     borderRadius: 16,
     marginRight: 16,
@@ -289,12 +339,12 @@ const styles = StyleSheet.create({
   },
   featuredInfo: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     gap: 6,
   },
   featuredTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 22,
   },
   featuredAuthor: {
@@ -302,19 +352,19 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   featuredMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginTop: 8,
   },
   ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   ratingText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   durationText: {
     fontSize: 13,
@@ -335,14 +385,14 @@ const styles = StyleSheet.create({
   },
   genreChipText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   genreChipTextActive: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
   },
   compactGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     paddingHorizontal: 20,
     gap: 12,
   },
@@ -360,7 +410,7 @@ const styles = StyleSheet.create({
   },
   compactTitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 16,
   },
   compactAuthor: {

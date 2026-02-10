@@ -1,35 +1,44 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ReportsScreen() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const cardBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
+  const colors = Colors[colorScheme ?? "light"];
+  const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            Reports & Analytics
-          </ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Platform insights and performance metrics
-          </ThemedText>
-        </View>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <ThemedText type="title" style={styles.title}>
+              Reports & Analytics
+            </ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Platform insights and performance metrics
+            </ThemedText>
+          </View>
 
-        <View style={[styles.emptyState, { backgroundColor: cardBgColor }]}>
-          <IconSymbol size={60} name="chart.bar.doc.horizontal" color={colors.icon} />
-          <ThemedText style={styles.emptyText}>No reports available</ThemedText>
-          <ThemedText style={styles.emptySubtext}>
-            Advanced reporting tools coming soon
-          </ThemedText>
-        </View>
-      </ScrollView>
+          <View style={[styles.emptyState, { backgroundColor: cardBgColor }]}>
+            <IconSymbol
+              size={60}
+              name="chart.bar.doc.horizontal"
+              color={colors.icon}
+            />
+            <ThemedText style={styles.emptyText}>
+              No reports available
+            </ThemedText>
+            <ThemedText style={styles.emptySubtext}>
+              Advanced reporting tools coming soon
+            </ThemedText>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -56,17 +65,17 @@ const styles = StyleSheet.create({
   emptyState: {
     padding: 40,
     borderRadius: 16,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 12,
     marginTop: 40,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptySubtext: {
     fontSize: 14,
     opacity: 0.7,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
