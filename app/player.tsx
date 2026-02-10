@@ -13,6 +13,7 @@ import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
 import { useAuth } from "@/context/auth-context";
+import { useSettings } from "@/context/settings-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { GUEST_TIME_LIMIT } from "@/types/playback";
 import { router } from "expo-router";
@@ -24,6 +25,7 @@ export default function PlayerScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { isGuest } = useAuth();
+  const { settings } = useSettings();
   const {
     playbackState,
     togglePlayPause,
@@ -122,6 +124,8 @@ export default function PlayerScreen() {
           <PlayerHeader
             onBack={() => router.back()}
             onMenuPress={() => Alert.alert("More", "Options coming soon!")}
+            onCarModePress={() => router.push("/car-mode")}
+            showCarMode={settings.carMode.enabled}
             colors={colors}
           />
 

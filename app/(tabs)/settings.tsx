@@ -1,4 +1,6 @@
 import { AudioQualityModal } from "@/components/settings/AudioQualityModal";
+import { AutoPlayModal } from "@/components/settings/AutoPlayModal";
+import { CarModeModal } from "@/components/settings/CarModeModal";
 import { DownloadSettingsModal } from "@/components/settings/DownloadSettingsModal";
 import { NotificationsModal } from "@/components/settings/NotificationsModal";
 import { ThemedText } from "@/components/themed-text";
@@ -22,12 +24,16 @@ export default function ProfileScreen() {
     updateAudioQuality,
     updateNotifications,
     updateDownloadSettings,
+    updateCarMode,
+    updateAutoPlay,
   } = useSettings();
 
   const [showAudioQualityModal, setShowAudioQualityModal] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showDownloadSettingsModal, setShowDownloadSettingsModal] =
     useState(false);
+  const [showCarModeModal, setShowCarModeModal] = useState(false);
+  const [showAutoPlayModal, setShowAutoPlayModal] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -286,6 +292,34 @@ export default function ProfileScreen() {
               </View>
               <IconSymbol size={20} name="chevron.right" color={colors.icon} />
             </Pressable>
+
+            <Pressable
+              style={[styles.menuItem, { backgroundColor: cardBgColor }]}
+              onPress={() => setShowCarModeModal(true)}
+            >
+              <View style={styles.menuItemLeft}>
+                <IconSymbol size={24} name="car.fill" color={colors.icon} />
+                <ThemedText style={styles.menuItemText}>Car Mode</ThemedText>
+              </View>
+              <IconSymbol size={20} name="chevron.right" color={colors.icon} />
+            </Pressable>
+
+            <Pressable
+              style={[styles.menuItem, { backgroundColor: cardBgColor }]}
+              onPress={() => setShowAutoPlayModal(true)}
+            >
+              <View style={styles.menuItemLeft}>
+                <IconSymbol
+                  size={24}
+                  name="play.circle.fill"
+                  color={colors.icon}
+                />
+                <ThemedText style={styles.menuItemText}>
+                  Auto-Play Settings
+                </ThemedText>
+              </View>
+              <IconSymbol size={20} name="chevron.right" color={colors.icon} />
+            </Pressable>
           </View>
 
           <View style={styles.section}>
@@ -332,6 +366,24 @@ export default function ProfileScreen() {
         onClose={() => setShowDownloadSettingsModal(false)}
         downloadSettings={settings.downloadSettings}
         onUpdateSettings={updateDownloadSettings}
+        colors={colors}
+        cardBgColor={cardBgColor}
+      />
+
+      <CarModeModal
+        visible={showCarModeModal}
+        onClose={() => setShowCarModeModal(false)}
+        carMode={settings.carMode}
+        onUpdateCarMode={updateCarMode}
+        colors={colors}
+        cardBgColor={cardBgColor}
+      />
+
+      <AutoPlayModal
+        visible={showAutoPlayModal}
+        onClose={() => setShowAutoPlayModal(false)}
+        autoPlay={settings.autoPlay}
+        onUpdateAutoPlay={updateAutoPlay}
         colors={colors}
         cardBgColor={cardBgColor}
       />

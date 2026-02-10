@@ -17,10 +17,28 @@ export interface DownloadSettings {
   autoDownload: boolean;
 }
 
+export interface CarModeSettings {
+  enabled: boolean;
+  autoLaunchOnBluetooth: boolean;
+  keepScreenOn: boolean;
+  increasedBrightness: boolean;
+  simplifiedControls: boolean;
+}
+
+export interface AutoPlaySettings {
+  autoPlayNextChapter: boolean;
+  autoPlayOnBluetooth: boolean;
+  autoPlayOnHeadphones: boolean;
+  autoResumeOnReturn: boolean;
+  continueAcrossBooks: boolean;
+}
+
 export interface AppSettings {
   audioQuality: AudioQuality;
   notifications: NotificationSettings;
   downloadSettings: DownloadSettings;
+  carMode: CarModeSettings;
+  autoPlay: AutoPlaySettings;
 }
 
 interface SettingsContextType {
@@ -28,6 +46,8 @@ interface SettingsContextType {
   updateAudioQuality: (quality: AudioQuality) => Promise<void>;
   updateNotifications: (notifications: NotificationSettings) => Promise<void>;
   updateDownloadSettings: (downloadSettings: DownloadSettings) => Promise<void>;
+  updateCarMode: (carMode: CarModeSettings) => Promise<void>;
+  updateAutoPlay: (autoPlay: AutoPlaySettings) => Promise<void>;
   loading: boolean;
 }
 
@@ -49,6 +69,20 @@ const defaultSettings: AppSettings = {
     downloadQuality: "high",
     downloadOnWiFiOnly: true,
     autoDownload: false,
+  },
+  carMode: {
+    enabled: false,
+    autoLaunchOnBluetooth: false,
+    keepScreenOn: true,
+    increasedBrightness: true,
+    simplifiedControls: true,
+  },
+  autoPlay: {
+    autoPlayNextChapter: true,
+    autoPlayOnBluetooth: false,
+    autoPlayOnHeadphones: false,
+    autoResumeOnReturn: true,
+    continueAcrossBooks: false,
   },
 };
 
@@ -96,11 +130,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     await saveSettings({ ...settings, downloadSettings });
   };
 
+  const updateCarMode = async (carMode: CarModeSettings) => {
+    await saveSettings({ ...settings, carMode });
+  };
+
+  const updateAutoPlay = async (autoPlay: AutoPlaySettings) => {
+    await saveSettings({ ...settings, autoPlay });
+  };
+
   const value = {
     settings,
     updateAudioQuality,
     updateNotifications,
     updateDownloadSettings,
+    updateCarMode,
+    updateAutoPlay,
     loading,
   };
 
