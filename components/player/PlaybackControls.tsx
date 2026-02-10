@@ -100,11 +100,11 @@ export function PlaybackControls({
 
 const styles = StyleSheet.create({
   controlsContainer: {
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     marginTop: 32,
   },
   controlButton: {
