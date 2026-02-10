@@ -9,6 +9,7 @@ import {
   getPasswordStrength,
   validatePassword,
 } from "@/utils/password-validation";
+import { getRoleBasedRoute } from "@/utils/navigation";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
@@ -63,7 +64,8 @@ export default function SignUpScreen() {
     setLoading(true);
     try {
       await signUp(email, password, displayName, role);
-      router.replace("/(tabs)");
+      const route = getRoleBasedRoute(role);
+      router.replace(route as any);
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message || "Something went wrong");
     } finally {
@@ -73,6 +75,8 @@ export default function SignUpScreen() {
 
   const inputBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
   const inputTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
+  const buttonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
+  const activeRoleTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const roles: {
     value: UserRole;
@@ -169,8 +173,8 @@ export default function SignUpScreen() {
                         { backgroundColor: inputBgColor },
                         role === r.value && {
                           backgroundColor: colors.tint,
-                          borderWidth: 2,
                           borderColor: colors.tint,
+                          ...styles.shadow,
                         },
                       ]}
                       onPress={() => setRole(r.value)}
@@ -178,12 +182,14 @@ export default function SignUpScreen() {
                       <IconSymbol
                         size={24}
                         name={r.icon as any}
-                        color={role === r.value ? "#FFFFFF" : colors.icon}
+                        color={
+                          role === r.value ? activeRoleTextColor : colors.icon
+                        }
                       />
                       <ThemedText
                         style={[
                           styles.roleLabel,
-                          role === r.value && styles.roleLabelActive,
+                          role === r.value && { color: activeRoleTextColor },
                         ]}
                       >
                         {r.label}
@@ -191,7 +197,10 @@ export default function SignUpScreen() {
                       <ThemedText
                         style={[
                           styles.roleDescription,
-                          role === r.value && styles.roleDescriptionActive,
+                          role === r.value && {
+                            color: activeRoleTextColor,
+                            opacity: 0.9,
+                          },
                         ]}
                       >
                         {r.description}
@@ -359,11 +368,17 @@ export default function SignUpScreen() {
               </View>
 
               <Pressable
-                style={[styles.button, { backgroundColor: colors.tint }]}
+                style={[
+                  styles.button,
+                  { backgroundColor: colors.tint },
+                  styles.shadow,
+                ]}
                 onPress={handleSignUp}
                 disabled={loading}
               >
-                <ThemedText style={styles.buttonText}>
+                <ThemedText
+                  style={[styles.buttonText, { color: buttonTextColor }]}
+                >
                   {loading ? "Creating Account..." : "Sign Up"}
                 </ThemedText>
               </Pressable>
@@ -445,17 +460,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 4,
   },
-  roleLabelActive: {
-    color: "#FFFFFF",
-  },
   roleDescription: {
     fontSize: 11,
     opacity: 0.7,
     textAlign: "center",
-  },
-  roleDescriptionActive: {
-    color: "#FFFFFF",
-    opacity: 0.9,
   },
   passwordContainer: {
     position: "relative",
@@ -532,5 +540,15 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
 });
