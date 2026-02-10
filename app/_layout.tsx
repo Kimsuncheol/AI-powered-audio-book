@@ -27,13 +27,11 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!user && !isGuest && !inAuthGroup) {
-      // Redirect to welcome if not authenticated and not in guest mode
-      router.replace('/(auth)/welcome');
-    } else if ((user || isGuest) && inAuthGroup) {
-      // Redirect to tabs if authenticated or in guest mode and in auth group
+    // Only redirect FROM auth screens TO tabs when authenticated or in guest mode
+    if ((user || isGuest) && inAuthGroup) {
       router.replace('/(tabs)');
     }
+    // No redirect to welcome screen - users start at tabs by default in guest mode
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, isGuest, segments]);
 

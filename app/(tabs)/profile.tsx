@@ -25,7 +25,7 @@ export default function ProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace("/(auth)/welcome");
+            router.replace("/");
           } catch (error: any) {
             Alert.alert("Error", error.message || "Failed to sign out");
           }
@@ -166,18 +166,6 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.section}>
-              <Pressable
-                style={[
-                  styles.createAccountButton,
-                  { backgroundColor: colors.tint },
-                ]}
-                onPress={() => router.push("/(auth)/sign-up")}
-              >
-                <ThemedText style={styles.createAccountText}>
-                  Create Free Account
-                </ThemedText>
-              </Pressable>
-
               <Pressable
                 style={[styles.loginButton, { borderColor: colors.tint }]}
                 onPress={() => router.push("/(auth)/login")}

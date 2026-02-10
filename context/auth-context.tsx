@@ -35,18 +35,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
-    // Load guest mode state from AsyncStorage
-    const loadGuestMode = async () => {
-      try {
-        const guestMode = await AsyncStorage.getItem(GUEST_MODE_KEY);
-        setIsGuest(guestMode === 'true');
-      } catch (error) {
-        console.error('Failed to load guest mode:', error);
-      }
-    };
-
-    loadGuestMode();
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
@@ -60,7 +48,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserProfile(profileDoc.data() as UserProfile);
         }
       } else {
+        // No user logged in - automatically set guest mode
         setUserProfile(null);
+        setIsGuest(true);
+        await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
       }
       setLoading(false);
     });
@@ -100,7 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await firebaseSignOut(auth);
     setUserProfile(null);
-    // Don't auto-enter guest mode on sign out
+    // Automatically return to guest mode after sign out
+    setIsGuest(true);
+    await AsyncStorage.setItem(GUEST_MODE_KEY, 'true');
   };
 
   const enterGuestMode = async () => {

@@ -25,7 +25,7 @@ export default function AuthorProfileScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace("/(auth)/welcome");
+            router.replace("/(tabs)/");
           } catch (error: any) {
             Alert.alert("Error", error.message || "Failed to sign out");
           }

@@ -25,7 +25,7 @@ export default function AdminSettingsScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace("/(auth)/welcome");
+            router.replace("/");
           } catch (error: any) {
             Alert.alert("Error", error.message || "Failed to sign out");
           }
