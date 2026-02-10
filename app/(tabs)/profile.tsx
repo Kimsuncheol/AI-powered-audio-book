@@ -1,10 +1,15 @@
+import { AudioQualityModal } from "@/components/settings/AudioQualityModal";
+import { DownloadSettingsModal } from "@/components/settings/DownloadSettingsModal";
+import { NotificationsModal } from "@/components/settings/NotificationsModal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
+import { useSettings } from "@/context/settings-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { router } from "expo-router";
+import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,6 +17,11 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { user, isGuest, signOut } = useAuth();
+  const { settings, updateAudioQuality, updateNotifications, updateDownloadSettings } = useSettings();
+
+  const [showAudioQualityModal, setShowAudioQualityModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showDownloadSettingsModal, setShowDownloadSettingsModal] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -198,9 +208,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => router.push("/(tabs)/edit-profile")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol size={24} name="person.fill" color={colors.icon} />
@@ -213,9 +221,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => setShowNotificationsModal(true)}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol size={24} name="bell.fill" color={colors.icon} />
@@ -228,9 +234,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => router.push("/(tabs)/privacy-security")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol size={24} name="lock.fill" color={colors.icon} />
@@ -247,9 +251,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => setShowAudioQualityModal(true)}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
@@ -266,9 +268,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => setShowDownloadSettingsModal(true)}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
@@ -303,6 +303,34 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Modals */}
+      <AudioQualityModal
+        visible={showAudioQualityModal}
+        onClose={() => setShowAudioQualityModal(false)}
+        selectedQuality={settings.audioQuality}
+        onSelectQuality={updateAudioQuality}
+        colors={colors}
+        cardBgColor={cardBgColor}
+      />
+
+      <NotificationsModal
+        visible={showNotificationsModal}
+        onClose={() => setShowNotificationsModal(false)}
+        notifications={settings.notifications}
+        onUpdateNotifications={updateNotifications}
+        colors={colors}
+        cardBgColor={cardBgColor}
+      />
+
+      <DownloadSettingsModal
+        visible={showDownloadSettingsModal}
+        onClose={() => setShowDownloadSettingsModal(false)}
+        downloadSettings={settings.downloadSettings}
+        onUpdateSettings={updateDownloadSettings}
+        colors={colors}
+        cardBgColor={cardBgColor}
+      />
     </ThemedView>
   );
 }

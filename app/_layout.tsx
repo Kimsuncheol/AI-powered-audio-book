@@ -11,6 +11,7 @@ import { AudioPlayerProvider } from '@/context/audio-player-context';
 import { FavoritesProvider } from '@/context/favorites-context';
 import { ProgressProvider } from '@/context/progress-context';
 import { ReviewsProvider } from '@/context/reviews-context';
+import { SettingsProvider } from '@/context/settings-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -61,15 +62,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AuthProvider>
-        <FavoritesProvider>
-          <ProgressProvider>
-            <ReviewsProvider>
-              <AudioPlayerProvider>
-                <RootLayoutNav />
-              </AudioPlayerProvider>
-            </ReviewsProvider>
-          </ProgressProvider>
-        </FavoritesProvider>
+        <SettingsProvider>
+          <FavoritesProvider>
+            <ProgressProvider>
+              <ReviewsProvider>
+                <AudioPlayerProvider>
+                  <RootLayoutNav />
+                </AudioPlayerProvider>
+              </ReviewsProvider>
+            </ProgressProvider>
+          </FavoritesProvider>
+        </SettingsProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   );
