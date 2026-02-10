@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
-  const { user, isGuest, signOut, exitGuestMode } = useAuth();
+  const { user, isGuest, signOut } = useAuth();
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -34,26 +34,6 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleExitGuestMode = async () => {
-    Alert.alert(
-      "Exit Guest Mode",
-      "You will be returned to the welcome screen.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Exit",
-          style: "default",
-          onPress: async () => {
-            await exitGuestMode();
-            router.replace("/(auth)/welcome");
-          },
-        },
-      ],
-    );
-  };
 
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
 
@@ -178,23 +158,6 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.section}>
-              <Pressable
-                style={[styles.menuItem, styles.exitGuestButton]}
-                onPress={handleExitGuestMode}
-              >
-                <View style={styles.menuItemLeft}>
-                  <IconSymbol
-                    size={24}
-                    name="rectangle.portrait.and.arrow.right"
-                    color={colors.icon}
-                  />
-                  <ThemedText style={styles.menuItemText}>
-                    Exit Guest Mode
-                  </ThemedText>
-                </View>
-              </Pressable>
-            </View>
           </ScrollView>
         </SafeAreaView>
       </ThemedView>

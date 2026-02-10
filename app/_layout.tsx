@@ -26,10 +26,9 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const inTabsGroup = segments[0] === '(tabs)';
 
-    // Redirect guests to library if they're in auth group or on initial load
-    if (isGuest && !inTabsGroup) {
+    // Redirect guests to library only on initial load (no segments)
+    if (isGuest && !segments[0]) {
       router.replace('/(tabs)');
       return;
     }
