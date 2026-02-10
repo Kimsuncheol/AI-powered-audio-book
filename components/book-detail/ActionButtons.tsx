@@ -1,0 +1,68 @@
+import { ThemedText } from "@/components/themed-text";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Pressable, StyleSheet, View } from "react-native";
+
+interface ActionButtonsProps {
+  onPlay: () => void;
+  onDownload: () => void;
+  colors: {
+    tint: string;
+    text: string;
+  };
+  cardBgColor: string;
+}
+
+export function ActionButtons({
+  onPlay,
+  onDownload,
+  colors,
+  cardBgColor,
+}: ActionButtonsProps) {
+  return (
+    <View style={styles.actionButtons}>
+      <Pressable
+        style={[styles.playButton, { backgroundColor: colors.tint }]}
+        onPress={onPlay}
+      >
+        <IconSymbol size={24} name="play.fill" color="#FFFFFF" />
+        <ThemedText style={styles.playButtonText}>Play Now</ThemedText>
+      </Pressable>
+      <Pressable
+        style={[styles.downloadButton, { backgroundColor: cardBgColor }]}
+        onPress={onDownload}
+      >
+        <IconSymbol size={24} name="arrow.down.circle" color={colors.text} />
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  actionButtons: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 16,
+    marginTop: 24,
+  },
+  playButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  playButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  downloadButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
