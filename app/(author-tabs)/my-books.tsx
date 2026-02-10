@@ -1,38 +1,16 @@
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function MyBooksScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const cardBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
-
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <ThemedText type="title" style={styles.title}>
-            My Books
-          </ThemedText>
-          <Pressable style={[styles.addButton, { backgroundColor: colors.tint }]}>
-            <IconSymbol size={20} name="plus" color="#FFFFFF" />
-          </Pressable>
-        </View>
-
-        <View style={[styles.emptyState, { backgroundColor: cardBgColor }]}>
-          <IconSymbol size={60} name="book.closed" color={colors.icon} />
-          <ThemedText style={styles.emptyText}>No books yet</ThemedText>
-          <ThemedText style={styles.emptySubtext}>
-            Upload your first audiobook to get started
-          </ThemedText>
-          <Pressable style={[styles.uploadButton, { backgroundColor: colors.tint }]}>
-            <ThemedText style={styles.uploadButtonText}>Upload Audiobook</ThemedText>
-          </Pressable>
-        </View>
-      </ScrollView>
+      <View style={styles.header}>
+        <ThemedText type="title">My Books</ThemedText>
+      </View>
+      <View style={styles.content}>
+        <ThemedText style={styles.placeholder}>My Books coming soon...</ThemedText>
+      </View>
     </ThemedView>
   );
 }
@@ -41,51 +19,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
-  },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 24,
+    padding: 20,
+    paddingTop: 60,
   },
-  title: {
-    fontSize: 32,
-  },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
+  content: {
+    flex: 1,
     justifyContent: 'center',
-  },
-  emptyState: {
-    padding: 40,
-    borderRadius: 16,
     alignItems: 'center',
-    gap: 12,
-    marginTop: 40,
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  uploadButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  uploadButtonText: {
+  placeholder: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    opacity: 0.7,
   },
 });

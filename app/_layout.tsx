@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/auth-context';
+import { AudioPlayerProvider } from '@/context/audio-player-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -37,6 +38,10 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(author-tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(admin-tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="player" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
       <StatusBar style="auto" />
@@ -47,7 +52,9 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <AudioPlayerProvider>
+        <RootLayoutNav />
+      </AudioPlayerProvider>
     </AuthProvider>
   );
 }
