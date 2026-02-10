@@ -1,23 +1,28 @@
-import { StyleSheet, View, Pressable, Dimensions } from 'react-native';
-import { router } from 'expo-router';
-import { Image } from 'expo-image';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { ThemedText } from '@/components/themed-text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAudioPlayer } from '@/context/audio-player-context';
+import { ThemedText } from "@/components/themed-text";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useAudioPlayer } from "@/context/audio-player-context";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Image } from "expo-image";
+import { router } from "expo-router";
+import { Dimensions, Pressable, StyleSheet, View } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MINI_PLAYER_HEIGHT = 80;
 const MINI_PLAYER_WIDTH = SCREEN_WIDTH - 16;
 const TAB_BAR_HEIGHT = 80;
 
 export function MiniPlayer() {
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-  const { playbackState, togglePlayPause, previousChapter, nextChapter } = useAudioPlayer();
+  const colors = Colors[colorScheme ?? "light"];
+  const { playbackState, togglePlayPause, previousChapter, nextChapter } =
+    useAudioPlayer();
 
   // Shared values for dragging - MUST be called before any conditional returns
   const translateX = useSharedValue(0);
@@ -59,28 +64,46 @@ export function MiniPlayer() {
   const book = playbackState.currentBook;
   if (!book) return null;
 
-  const cardBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
-  const progress = playbackState.duration > 0
-    ? (playbackState.position / playbackState.duration) * 100
-    : 0;
+  const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
+  const buttonBgColor =
+    colorScheme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.06)";
+  const playButtonBgColor =
+    colorScheme === "dark"
+      ? "rgba(255, 255, 255, 0.15)"
+      : "rgba(0, 0, 0, 0.08)";
+  const progress =
+    playbackState.duration > 0
+      ? (playbackState.position / playbackState.duration) * 100
+      : 0;
 
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.container, animatedStyle]}>
         <Pressable
           style={[styles.playerCard, { backgroundColor: cardBgColor }]}
-          onPress={() => router.push('/player')}
+          onPress={() => router.push("/player")}
         >
           {/* Progress bar */}
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progress}%`, backgroundColor: colors.tint },
+              ]}
+            />
           </View>
 
           <View style={styles.content}>
-            <Image source={{ uri: book.coverImage }} style={styles.cover} contentFit="cover" />
+            <Image
+              source={{ uri: book.coverImage }}
+              style={styles.cover}
+              contentFit="cover"
+            />
 
             <View style={styles.info}>
-              <ThemedText style={styles.title} numberOfLines={1}>{book.title}</ThemedText>
+              <ThemedText style={styles.title} numberOfLines={1}>
+                {book.title}
+              </ThemedText>
               <ThemedText style={styles.chapter} numberOfLines={1}>
                 {book.chapters[playbackState.currentChapterIndex]?.title}
               </ThemedText>
@@ -89,14 +112,17 @@ export function MiniPlayer() {
             <View style={styles.controls}>
               {/* Previous button */}
               <Pressable
-                style={styles.controlButton}
+                style={[
+                  styles.controlButton,
+                  { backgroundColor: buttonBgColor },
+                ]}
                 onPress={(e) => {
                   e.stopPropagation();
                   previousChapter();
                 }}
               >
                 <IconSymbol
-                  size={24}
+                  size={22}
                   name="backward.fill"
                   color={colors.text}
                 />
@@ -104,32 +130,34 @@ export function MiniPlayer() {
 
               {/* Play/Pause button */}
               <Pressable
-                style={styles.playButton}
+                style={[
+                  styles.playButton,
+                  { backgroundColor: playButtonBgColor },
+                ]}
                 onPress={(e) => {
                   e.stopPropagation();
                   togglePlayPause();
                 }}
               >
                 <IconSymbol
-                  size={28}
-                  name={playbackState.isPlaying ? 'pause.fill' : 'play.fill'}
+                  size={26}
+                  name={playbackState.isPlaying ? "pause.fill" : "play.fill"}
                   color={colors.text}
                 />
               </Pressable>
 
               {/* Next button */}
               <Pressable
-                style={styles.controlButton}
+                style={[
+                  styles.controlButton,
+                  { backgroundColor: buttonBgColor },
+                ]}
                 onPress={(e) => {
                   e.stopPropagation();
                   nextChapter();
                 }}
               >
-                <IconSymbol
-                  size={24}
-                  name="forward.fill"
-                  color={colors.text}
-                />
+                <IconSymbol size={22} name="forward.fill" color={colors.text} />
               </Pressable>
             </View>
           </View>
@@ -141,7 +169,7 @@ export function MiniPlayer() {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     bottom: TAB_BAR_HEIGHT,
     left: 8,
     right: 8,
@@ -149,8 +177,8 @@ const styles = StyleSheet.create({
   },
   playerCard: {
     borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
@@ -158,14 +186,14 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 3,
-    backgroundColor: 'rgba(128, 128, 128, 0.2)',
+    backgroundColor: "rgba(128, 128, 128, 0.2)",
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
   },
   content: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     gap: 12,
   },
@@ -180,27 +208,29 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   chapter: {
     fontSize: 12,
     opacity: 0.6,
   },
   controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
   controlButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
   playButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
