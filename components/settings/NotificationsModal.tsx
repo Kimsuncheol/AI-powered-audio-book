@@ -1,7 +1,8 @@
 import { ThemedText } from "@/components/themed-text";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { NotificationSettings } from "@/context/settings-context";
-import { Modal, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { ModalHeader } from "./common/ModalHeader";
+import { SettingToggleItem } from "./common/SettingToggleItem";
 
 interface NotificationsModalProps {
   visible: boolean;
@@ -43,115 +44,56 @@ export function NotificationsModal({
         <View
           style={[styles.modalContent, { backgroundColor: colors.background }]}
         >
-          <View style={styles.modalHeader}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>
-              Notifications
-            </ThemedText>
-            <Pressable onPress={onClose}>
-              <IconSymbol size={24} name="xmark" color={colors.icon} />
-            </Pressable>
-          </View>
+          <ModalHeader
+            title="Notifications"
+            onClose={onClose}
+            colors={colors}
+          />
 
           <ThemedText style={[styles.description, { opacity: 0.7 }]}>
             Manage your notification preferences for the app.
           </ThemedText>
 
           <View style={styles.settingsContainer}>
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol size={24} name="book.fill" color={colors.icon} />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    New Releases
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Notify me when new audiobooks are released
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={notifications.newReleases}
-                onValueChange={() => handleToggle("newReleases")}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="book.fill"
+              label="New Releases"
+              description="Notify me when new audiobooks are released"
+              value={notifications.newReleases}
+              onValueChange={() => handleToggle("newReleases")}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
 
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol size={24} name="sparkles" color={colors.icon} />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    Recommendations
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Get personalized book recommendations
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={notifications.recommendations}
-                onValueChange={() => handleToggle("recommendations")}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="sparkles"
+              label="Recommendations"
+              description="Get personalized book recommendations"
+              value={notifications.recommendations}
+              onValueChange={() => handleToggle("recommendations")}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
 
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol
-                  size={24}
-                  name="arrow.down.circle.fill"
-                  color={colors.icon}
-                />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    App Updates
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Notifications about new features and updates
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={notifications.updates}
-                onValueChange={() => handleToggle("updates")}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="arrow.down.circle.fill"
+              label="App Updates"
+              description="Notifications about new features and updates"
+              value={notifications.updates}
+              onValueChange={() => handleToggle("updates")}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
 
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol
-                  size={24}
-                  name="megaphone.fill"
-                  color={colors.icon}
-                />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    Marketing & Offers
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Special offers and promotional content
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={notifications.marketing}
-                onValueChange={() => handleToggle("marketing")}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="megaphone.fill"
+              label="Marketing & Offers"
+              description="Special offers and promotional content"
+              value={notifications.marketing}
+              onValueChange={() => handleToggle("marketing")}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
           </View>
 
           <Pressable
@@ -178,16 +120,6 @@ const styles = StyleSheet.create({
     padding: 24,
     minHeight: 500,
   },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "600",
-  },
   description: {
     fontSize: 14,
     marginBottom: 24,
@@ -196,31 +128,6 @@ const styles = StyleSheet.create({
   settingsContainer: {
     gap: 12,
     marginBottom: 24,
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 12,
-  },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  settingText: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 14,
-    opacity: 0.7,
   },
   doneButton: {
     paddingVertical: 16,

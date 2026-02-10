@@ -1,7 +1,9 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { DownloadSettings } from "@/context/settings-context";
-import { Modal, Pressable, StyleSheet, Switch, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { ModalHeader } from "./common/ModalHeader";
+import { SettingToggleItem } from "./common/SettingToggleItem";
 
 interface DownloadSettingsModalProps {
   visible: boolean;
@@ -48,17 +50,16 @@ export function DownloadSettingsModal({
         <View
           style={[styles.modalContent, { backgroundColor: colors.background }]}
         >
-          <View style={styles.modalHeader}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>
-              Download Settings
-            </ThemedText>
-            <Pressable onPress={onClose}>
-              <IconSymbol size={24} name="xmark" color={colors.icon} />
-            </Pressable>
-          </View>
+          <ModalHeader
+            title="Download Settings"
+            onClose={onClose}
+            colors={colors}
+          />
 
           <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Download Quality</ThemedText>
+            <ThemedText style={styles.sectionTitle}>
+              Download Quality
+            </ThemedText>
             <View style={styles.qualityOptions}>
               <Pressable
                 style={[
@@ -117,53 +118,25 @@ export function DownloadSettingsModal({
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
 
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol size={24} name="wifi" color={colors.icon} />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    WiFi Only Downloads
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Only download when connected to WiFi
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={downloadSettings.downloadOnWiFiOnly}
-                onValueChange={handleWiFiOnlyToggle}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="wifi"
+              label="WiFi Only Downloads"
+              description="Only download when connected to WiFi"
+              value={downloadSettings.downloadOnWiFiOnly}
+              onValueChange={handleWiFiOnlyToggle}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
 
-            <View
-              style={[styles.settingItem, { backgroundColor: cardBgColor }]}
-            >
-              <View style={styles.settingLeft}>
-                <IconSymbol
-                  size={24}
-                  name="arrow.down.circle"
-                  color={colors.icon}
-                />
-                <View style={styles.settingText}>
-                  <ThemedText style={styles.settingLabel}>
-                    Auto Download
-                  </ThemedText>
-                  <ThemedText style={[styles.settingDescription]}>
-                    Automatically download new chapters
-                  </ThemedText>
-                </View>
-              </View>
-              <Switch
-                value={downloadSettings.autoDownload}
-                onValueChange={handleAutoDownloadToggle}
-                trackColor={{ false: "#767577", true: colors.tint }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+            <SettingToggleItem
+              icon="arrow.down.circle"
+              label="Auto Download"
+              description="Automatically download new chapters"
+              value={downloadSettings.autoDownload}
+              onValueChange={handleAutoDownloadToggle}
+              colors={colors}
+              cardBgColor={cardBgColor}
+            />
           </View>
 
           <Pressable
@@ -189,16 +162,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     minHeight: 500,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "600",
   },
   section: {
     marginBottom: 24,
@@ -226,32 +189,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   qualityDescription: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  settingItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  settingLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  settingText: {
-    flex: 1,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  settingDescription: {
     fontSize: 14,
     opacity: 0.7,
   },

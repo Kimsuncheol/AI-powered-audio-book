@@ -2,6 +2,7 @@ import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { AudioQuality } from "@/context/settings-context";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { ModalHeader } from "./common/ModalHeader";
 
 interface AudioQualityModalProps {
   visible: boolean;
@@ -75,14 +76,11 @@ export function AudioQualityModal({
         <View
           style={[styles.modalContent, { backgroundColor: colors.background }]}
         >
-          <View style={styles.modalHeader}>
-            <ThemedText type="subtitle" style={styles.modalTitle}>
-              Audio Quality
-            </ThemedText>
-            <Pressable onPress={onClose}>
-              <IconSymbol size={24} name="xmark" color={colors.icon} />
-            </Pressable>
-          </View>
+          <ModalHeader
+            title="Audio Quality"
+            onClose={onClose}
+            colors={colors}
+          />
 
           <ThemedText style={[styles.description, { opacity: 0.7 }]}>
             Choose the audio streaming quality. Higher quality uses more data.
@@ -144,16 +142,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     minHeight: 400,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "600",
   },
   description: {
     fontSize: 14,
