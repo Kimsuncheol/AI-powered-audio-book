@@ -1,22 +1,8 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pressable, StyleSheet, View } from "react-native";
 
-interface PlaybackControlsProps {
-  isPlaying: boolean;
-  onPlayPause: () => void;
-  onSkipForward: () => void;
-  onSkipBackward: () => void;
-  onPreviousChapter: () => void;
-  onNextChapter: () => void;
-  isGuest: boolean;
-  chapterIndex: number;
-  onGuestLimit: () => void;
-  colors: {
-    tint: string;
-    text: string;
-    icon: string;
-  };
-}
+// ... existing imports
 
 export function PlaybackControls({
   isPlaying,
@@ -31,6 +17,8 @@ export function PlaybackControls({
   colors,
 }: PlaybackControlsProps) {
   const isNextDisabled = isGuest && chapterIndex >= 0;
+  const theme = useColorScheme();
+  const iconColor = theme === "dark" ? "#000000" : "#FFFFFF";
 
   return (
     <View style={styles.controlsContainer}>
@@ -49,7 +37,7 @@ export function PlaybackControls({
         <IconSymbol
           size={40}
           name={isPlaying ? "pause.fill" : "play.fill"}
-          color="#FFFFFF"
+          color={iconColor}
         />
       </Pressable>
 
