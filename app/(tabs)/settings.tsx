@@ -17,11 +17,17 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { user, isGuest, signOut } = useAuth();
-  const { settings, updateAudioQuality, updateNotifications, updateDownloadSettings } = useSettings();
+  const {
+    settings,
+    updateAudioQuality,
+    updateNotifications,
+    updateDownloadSettings,
+  } = useSettings();
 
   const [showAudioQualityModal, setShowAudioQualityModal] = useState(false);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
-  const [showDownloadSettingsModal, setShowDownloadSettingsModal] = useState(false);
+  const [showDownloadSettingsModal, setShowDownloadSettingsModal] =
+    useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -43,7 +49,6 @@ export default function ProfileScreen() {
       },
     ]);
   };
-
 
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
 
@@ -167,7 +172,6 @@ export default function ProfileScreen() {
                 </ThemedText>
               </Pressable>
             </View>
-
           </ScrollView>
         </SafeAreaView>
       </ThemedView>
@@ -208,7 +212,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() => router.push("/(tabs)/edit-profile")}
+              onPress={() => router.push("/(tabs)/profile")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol size={24} name="person.fill" color={colors.icon} />

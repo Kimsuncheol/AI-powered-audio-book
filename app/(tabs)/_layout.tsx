@@ -57,7 +57,7 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="edit-profile"
+          name="profile"
           options={{
             href: null,
             title: "Edit Profile",
