@@ -6,16 +6,12 @@ interface BookCoverProps {
   coverImage: string;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  colors: {
-    tint: string;
-  };
 }
 
 export function BookCover({
   coverImage,
   isFavorite,
   onToggleFavorite,
-  colors,
 }: BookCoverProps) {
   return (
     <View style={styles.coverContainer}>
@@ -24,19 +20,11 @@ export function BookCover({
         style={styles.coverImage}
         contentFit="cover"
       />
-      <Pressable
-        style={[
-          styles.favoriteButton,
-          {
-            backgroundColor: isFavorite ? colors.tint : "rgba(0,0,0,0.5)",
-          },
-        ]}
-        onPress={onToggleFavorite}
-      >
+      <Pressable style={styles.favoriteButton} onPress={onToggleFavorite}>
         <IconSymbol
           size={24}
           name={isFavorite ? "heart.fill" : "heart"}
-          color="#FFFFFF"
+          color={"#FF3B30"}
         />
       </Pressable>
     </View>

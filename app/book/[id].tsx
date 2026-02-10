@@ -169,7 +169,6 @@ export default function BookDetailScreen() {
               coverImage={book.coverImage}
               isFavorite={isFavorite}
               onToggleFavorite={handleToggleFavorite}
-              colors={colors}
             />
 
             <BookMetadata
