@@ -5,11 +5,11 @@ import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { UserRole } from "@/types/user";
+import { getRoleBasedRoute } from "@/utils/navigation";
 import {
   getPasswordStrength,
   validatePassword,
 } from "@/utils/password-validation";
-import { getRoleBasedRoute } from "@/utils/navigation";
 import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
