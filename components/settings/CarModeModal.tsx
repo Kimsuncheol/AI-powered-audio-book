@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { CarModeSettings } from "@/context/settings-context";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { Modal, StyleSheet, View } from "react-native";
+import { DoneButton } from "./common/DoneButton";
 import { ModalHeader } from "./common/ModalHeader";
 import { SettingToggleItem } from "./common/SettingToggleItem";
 
@@ -103,12 +104,7 @@ export function CarModeModal({
             />
           </View>
 
-          <Pressable
-            style={[styles.doneButton, { backgroundColor: colors.tint }]}
-            onPress={onClose}
-          >
-            <ThemedText style={styles.doneButtonText}>Done</ThemedText>
-          </Pressable>
+          <DoneButton onPress={onClose} colors={colors} />
         </View>
       </View>
     </Modal>
@@ -135,15 +131,5 @@ const styles = StyleSheet.create({
   settingsContainer: {
     gap: 12,
     marginBottom: 24,
-  },
-  doneButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  doneButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });

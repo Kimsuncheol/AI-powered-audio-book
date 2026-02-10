@@ -10,6 +10,7 @@ import { Colors } from "@/constants/theme";
 import { useAuth } from "@/context/auth-context";
 import { useSettings } from "@/context/settings-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, View } from "react-native";
@@ -298,7 +299,7 @@ export default function ProfileScreen() {
               onPress={() => setShowCarModeModal(true)}
             >
               <View style={styles.menuItemLeft}>
-                <IconSymbol size={24} name="car.fill" color={colors.icon} />
+                <Ionicons name="car-sport" size={24} color={colors.icon} />
                 <ThemedText style={styles.menuItemText}>Car Mode</ThemedText>
               </View>
               <IconSymbol size={20} name="chevron.right" color={colors.icon} />
