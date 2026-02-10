@@ -2,19 +2,23 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAudioPlayer } from "@/context/audio-player-context";
+import { useFavorites } from "@/context/favorites-context";
+import { useReviews, Review } from "@/context/reviews-context";
 import { MOCK_AUDIOBOOKS, formatDuration } from "@/data/mock-audiobooks";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AudioBook } from "@/types/audiobook";
 import { Image } from "expo-image";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { useAudioPlayer } from "@/context/audio-player-context";
 import {
   Alert,
   Dimensions,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -26,10 +30,14 @@ export default function BookDetailScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { loadBook } = useAudioPlayer();
+  const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
+  const { getReviewsForBook, getAverageRating, addReview, hasUserReviewed } = useReviews();
 
   const [book, setBook] = useState<AudioBook | null>(null);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [currentChapter, setCurrentChapter] = useState(0);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
 
   useEffect(() => {
     // Find the book by ID
@@ -81,19 +89,42 @@ export default function BookDetailScreen() {
     Alert.alert("Share", "Share functionality coming soon!");
   };
 
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    Alert.alert(
-      isFavorite ? "Removed from Favorites" : "Added to Favorites",
-      isFavorite
-        ? `${book.title} has been removed from your favorites`
-        : `${book.title} has been added to your favorites`,
-    );
+  const isFavorite = book ? checkFavorite(book.id) : false;
+  const bookReviews = book ? getReviewsForBook(book.id) : [];
+  const ratingInfo = book ? getAverageRating(book.id) : { average: 0, count: 0 };
+  const alreadyReviewed = book ? hasUserReviewed(book.id) : false;
+
+  const handleToggleFavorite = () => {
+    if (book) toggleFavorite(book.id);
+  };
+
+  const handleSubmitReview = () => {
+    if (!reviewText.trim()) {
+      Alert.alert('Error', 'Please write a review');
+      return;
+    }
+    if (book) {
+      addReview(book.id, reviewRating, reviewText.trim());
+      setShowReviewModal(false);
+      setReviewText('');
+      setReviewRating(5);
+      Alert.alert('Thank you!', 'Your review has been submitted');
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(diff / 86400000);
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    return `${Math.floor(days / 30)} months ago`;
   };
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header with Back Button */}
           <View style={styles.header}>
@@ -132,7 +163,7 @@ export default function BookDetailScreen() {
                       : "rgba(0,0,0,0.5)",
                   },
                 ]}
-                onPress={toggleFavorite}
+                onPress={handleToggleFavorite}
               >
                 <IconSymbol
                   size={24}
@@ -303,101 +334,139 @@ export default function BookDetailScreen() {
               <ThemedText type="subtitle" style={styles.sectionTitle}>
                 Ratings & Reviews
               </ThemedText>
-              <Pressable>
-                <ThemedText style={[styles.seeAllText, { color: colors.tint }]}>
-                  See all
-                </ThemedText>
-              </Pressable>
             </View>
 
             <View
               style={[styles.ratingOverview, { backgroundColor: cardBgColor }]}
             >
               <View style={styles.ratingOverviewLeft}>
-                <ThemedText style={styles.ratingBig}>{book.rating}</ThemedText>
+                <ThemedText style={styles.ratingBig}>
+                  {ratingInfo.count > 0 ? ratingInfo.average : book.rating}
+                </ThemedText>
                 <View style={styles.stars}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <IconSymbol
                       key={star}
                       size={16}
                       name={
-                        star <= Math.floor(book.rating) ? "star.fill" : "star"
+                        star <= Math.floor(ratingInfo.count > 0 ? ratingInfo.average : book.rating)
+                          ? "star.fill"
+                          : "star"
                       }
                       color="#FFD700"
                     />
                   ))}
                 </View>
-                <ThemedText style={styles.ratingCount}>256 ratings</ThemedText>
-              </View>
-              <Pressable
-                style={[
-                  styles.writeReviewButton,
-                  { backgroundColor: colors.tint },
-                ]}
-                onPress={() =>
-                  Alert.alert("Write Review", "Review feature coming soon!")
-                }
-              >
-                <ThemedText style={styles.writeReviewText}>
-                  Write a Review
+                <ThemedText style={styles.ratingCount}>
+                  {ratingInfo.count > 0 ? `${ratingInfo.count} reviews` : 'No reviews yet'}
                 </ThemedText>
-              </Pressable>
+              </View>
+              {!alreadyReviewed && (
+                <Pressable
+                  style={[
+                    styles.writeReviewButton,
+                    { backgroundColor: colors.tint },
+                  ]}
+                  onPress={() => setShowReviewModal(true)}
+                >
+                  <ThemedText style={styles.writeReviewText}>
+                    Write a Review
+                  </ThemedText>
+                </Pressable>
+              )}
             </View>
 
-            {/* Sample Reviews */}
-            <View style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
-              <View style={styles.reviewHeader}>
-                <View>
-                  <ThemedText style={styles.reviewAuthor}>
-                    Sarah Johnson
-                  </ThemedText>
-                  <View style={styles.reviewStars}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <IconSymbol
-                        key={star}
-                        size={12}
-                        name="star.fill"
-                        color="#FFD700"
-                      />
-                    ))}
+            {bookReviews.map((review) => (
+              <View key={review.id} style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
+                <View style={styles.reviewHeader}>
+                  <View>
+                    <ThemedText style={styles.reviewAuthor}>
+                      {review.userName}
+                    </ThemedText>
+                    <View style={styles.reviewStars}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <IconSymbol
+                          key={star}
+                          size={12}
+                          name={star <= review.rating ? "star.fill" : "star"}
+                          color="#FFD700"
+                        />
+                      ))}
+                    </View>
                   </View>
+                  <ThemedText style={styles.reviewDate}>{formatTimeAgo(review.createdAt)}</ThemedText>
                 </View>
-                <ThemedText style={styles.reviewDate}>2 days ago</ThemedText>
+                <ThemedText style={styles.reviewText}>
+                  {review.text}
+                </ThemedText>
               </View>
-              <ThemedText style={styles.reviewText}>
-                Absolutely captivating! The narrator brings the story to life
-                beautifully. Couldn't stop listening.
-              </ThemedText>
-            </View>
+            ))}
 
-            <View style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
-              <View style={styles.reviewHeader}>
-                <View>
-                  <ThemedText style={styles.reviewAuthor}>
-                    Michael Chen
-                  </ThemedText>
-                  <View style={styles.reviewStars}>
-                    {[1, 2, 3, 4].map((star) => (
-                      <IconSymbol
-                        key={star}
-                        size={12}
-                        name="star.fill"
-                        color="#FFD700"
-                      />
-                    ))}
-                    <IconSymbol size={12} name="star" color="#FFD700" />
-                  </View>
-                </View>
-                <ThemedText style={styles.reviewDate}>1 week ago</ThemedText>
+            {bookReviews.length === 0 && (
+              <View style={[styles.reviewCard, { backgroundColor: cardBgColor }]}>
+                <ThemedText style={[styles.reviewText, { textAlign: 'center' }]}>
+                  No reviews yet. Be the first to review!
+                </ThemedText>
               </View>
-              <ThemedText style={styles.reviewText}>
-                Great story and excellent narration. Highly recommend for anyone
-                who enjoys this genre.
-              </ThemedText>
-            </View>
+            )}
           </View>
 
           <View style={styles.bottomSpacer} />
+
+          {/* Review Modal */}
+          <Modal
+            visible={showReviewModal}
+            animationType="slide"
+            transparent
+            onRequestClose={() => setShowReviewModal(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: colorScheme === 'dark' ? '#1C1C1E' : '#FFFFFF' }]}>
+                <View style={styles.modalHeader}>
+                  <ThemedText type="subtitle">Write a Review</ThemedText>
+                  <Pressable onPress={() => setShowReviewModal(false)}>
+                    <IconSymbol size={24} name="xmark.circle.fill" color={colors.icon} />
+                  </Pressable>
+                </View>
+
+                <View style={styles.starSelector}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Pressable key={star} onPress={() => setReviewRating(star)}>
+                      <IconSymbol
+                        size={36}
+                        name={star <= reviewRating ? "star.fill" : "star"}
+                        color="#FFD700"
+                      />
+                    </Pressable>
+                  ))}
+                </View>
+
+                <TextInput
+                  style={[
+                    styles.reviewInput,
+                    {
+                      backgroundColor: colorScheme === 'dark' ? '#2C2C2E' : '#F2F2F7',
+                      color: colorScheme === 'dark' ? '#FFFFFF' : '#000000',
+                    },
+                  ]}
+                  placeholder="Share your thoughts about this audiobook..."
+                  placeholderTextColor={colorScheme === 'dark' ? '#8E8E93' : '#999'}
+                  multiline
+                  numberOfLines={5}
+                  textAlignVertical="top"
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                />
+
+                <Pressable
+                  style={[styles.submitReviewButton, { backgroundColor: colors.tint }]}
+                  onPress={handleSubmitReview}
+                >
+                  <ThemedText style={styles.submitReviewText}>Submit Review</ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          </Modal>
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -691,5 +760,42 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    gap: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  starSelector: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 12,
+  },
+  reviewInput: {
+    padding: 16,
+    borderRadius: 12,
+    fontSize: 16,
+    minHeight: 120,
+  },
+  submitReviewButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  submitReviewText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

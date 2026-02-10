@@ -5,6 +5,7 @@ import {
   Pressable,
   TextInput,
   FlatList,
+  ScrollView,
   Dimensions,
 } from 'react-native';
 import { Link } from 'expo-router';
@@ -15,7 +16,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/context/auth-context';
-import { MOCK_AUDIOBOOKS, formatDuration } from '@/data/mock-audiobooks';
+import { useProgress } from '@/context/progress-context';
+import { MOCK_AUDIOBOOKS, formatDuration, getProgressPercentage } from '@/data/mock-audiobooks';
 import { AudioBook } from '@/types/audiobook';
 
 const { width } = Dimensions.get('window');
@@ -25,7 +27,16 @@ export default function LibraryScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user } = useAuth();
+  const { getInProgressBooks, getProgress } = useProgress();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const inProgressList = getInProgressBooks();
+  const continueListeningBooks = inProgressList
+    .map((progress) => {
+      const book = MOCK_AUDIOBOOKS.find((b) => b.id === progress.bookId);
+      return book ? { book, progress } : null;
+    })
+    .filter(Boolean) as { book: AudioBook; progress: any }[];
 
   const filteredBooks = MOCK_AUDIOBOOKS.filter(
     (book) =>
@@ -88,6 +99,43 @@ export default function LibraryScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* Continue Listening Section */}
+      {continueListeningBooks.length > 0 && searchQuery.length === 0 && (
+        <View style={styles.continueSection}>
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle" style={styles.sectionTitle}>
+              Continue Listening
+            </ThemedText>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.continueScroll}>
+            {continueListeningBooks.map(({ book, progress }) => (
+              <Link key={book.id} href={`/book/${book.id}`} asChild>
+                <Pressable style={[styles.continueCard, { backgroundColor: inputBgColor }]}>
+                  <Image source={{ uri: book.coverImage }} style={styles.continueCover} contentFit="cover" />
+                  <View style={styles.continueInfo}>
+                    <ThemedText style={styles.continueTitle} numberOfLines={1}>{book.title}</ThemedText>
+                    <ThemedText style={styles.continueChapter} numberOfLines={1}>
+                      Chapter {progress.currentChapter + 1}
+                    </ThemedText>
+                    <View style={styles.progressBarContainer}>
+                      <View
+                        style={[
+                          styles.progressBarFill,
+                          {
+                            width: `${getProgressPercentage(progress.currentPosition, book.duration)}%`,
+                            backgroundColor: colors.tint,
+                          },
+                        ]}
+                      />
+                    </View>
+                  </View>
+                </Pressable>
+              </Link>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.sectionHeader}>
         <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -240,5 +288,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     opacity: 0.7,
     marginTop: 4,
+  },
+  continueSection: {
+    marginBottom: 8,
+  },
+  continueScroll: {
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  continueCard: {
+    flexDirection: 'row',
+    width: width * 0.75,
+    padding: 12,
+    borderRadius: 12,
+    gap: 12,
+  },
+  continueCover: {
+    width: 60,
+    height: 80,
+    borderRadius: 8,
+  },
+  continueInfo: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 4,
+  },
+  continueTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  continueChapter: {
+    fontSize: 13,
+    opacity: 0.6,
+  },
+  progressBarContainer: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(128,128,128,0.2)',
+    marginTop: 6,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 });

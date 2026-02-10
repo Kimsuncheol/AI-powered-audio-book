@@ -7,6 +7,9 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { AudioPlayerProvider } from '@/context/audio-player-context';
+import { FavoritesProvider } from '@/context/favorites-context';
+import { ProgressProvider } from '@/context/progress-context';
+import { ReviewsProvider } from '@/context/reviews-context';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -52,9 +55,15 @@ function RootLayoutNav() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <AudioPlayerProvider>
-        <RootLayoutNav />
-      </AudioPlayerProvider>
+      <FavoritesProvider>
+        <ProgressProvider>
+          <ReviewsProvider>
+            <AudioPlayerProvider>
+              <RootLayoutNav />
+            </AudioPlayerProvider>
+          </ReviewsProvider>
+        </ProgressProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }
