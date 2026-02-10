@@ -16,7 +16,7 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MOCK_AUDIOBOOKS, formatDuration } from '@/data/mock-audiobooks';
+import { MOCK_AUDIOBOOKS, formatDuration, formatTime } from '@/data/mock-audiobooks';
 
 const { width } = Dimensions.get('window');
 
@@ -219,8 +219,8 @@ export default function PlayerScreen() {
             thumbTintColor={colors.tint}
           />
           <View style={styles.timeRow}>
-            <ThemedText style={styles.timeText}>{formatDuration(Math.floor(position))}</ThemedText>
-            <ThemedText style={styles.timeText}>{formatDuration(Math.floor(duration))}</ThemedText>
+            <ThemedText style={styles.timeText}>{formatTime(Math.floor(position))}</ThemedText>
+            <ThemedText style={styles.timeText}>{formatTime(Math.floor(duration))}</ThemedText>
           </View>
         </View>
 

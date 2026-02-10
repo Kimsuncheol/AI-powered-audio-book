@@ -125,7 +125,7 @@ export default function PlayerScreen() {
             onBack={() => router.back()}
             onMenuPress={() => Alert.alert("More", "Options coming soon!")}
             onCarModePress={() => router.push("/car-mode")}
-            showCarMode={settings.carMode.enabled}
+            showCarMode={settings?.carMode?.enabled ?? false}
             colors={colors}
           />
 

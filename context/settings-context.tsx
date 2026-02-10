@@ -98,7 +98,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       const stored = await AsyncStorage.getItem(SETTINGS_KEY);
       if (stored) {
-        setSettings(JSON.parse(stored));
+        const parsedSettings = JSON.parse(stored);
+        // Merge with default settings to ensure all new properties exist
+        setSettings({
+          ...defaultSettings,
+          ...parsedSettings,
+          carMode: {
+            ...defaultSettings.carMode,
+            ...(parsedSettings.carMode || {}),
+          },
+          autoPlay: {
+            ...defaultSettings.autoPlay,
+            ...(parsedSettings.autoPlay || {}),
+          },
+        });
       }
     } catch (error) {
       console.error("Error loading settings:", error);

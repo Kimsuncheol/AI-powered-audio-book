@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { formatDuration } from "@/data/mock-audiobooks";
+import { formatTime } from "@/data/mock-audiobooks";
 import Slider from "@react-native-community/slider";
 import { StyleSheet, View } from "react-native";
 
@@ -34,10 +34,10 @@ export function ProgressSlider({
       />
       <View style={styles.timeContainer}>
         <ThemedText style={styles.timeText}>
-          {formatDuration(Math.floor(position / 1000))}
+          {formatTime(Math.floor(position / 1000))}
         </ThemedText>
         <ThemedText style={styles.timeText}>
-          {formatDuration(Math.floor(duration / 1000))}
+          {formatTime(Math.floor(duration / 1000))}
         </ThemedText>
       </View>
     </View>
