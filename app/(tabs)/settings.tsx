@@ -1,12 +1,13 @@
 import { AudioQualityModal } from "@/components/settings/AudioQualityModal";
-import { AutoPlayModal } from "@/components/settings/AutoPlayModal";
 import { CarModeModal } from "@/components/settings/CarModeModal";
 import { DownloadSettingsModal } from "@/components/settings/DownloadSettingsModal";
 import { NotificationsModal } from "@/components/settings/NotificationsModal";
+import { PlaybackSettingsModal } from "@/components/settings/PlaybackSettingsModal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAudioPlayer } from "@/context/audio-player-context";
 import { useAuth } from "@/context/auth-context";
 import { useSettings } from "@/context/settings-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -19,6 +20,7 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { user, isGuest, signOut } = useAuth();
+  const { playbackState, setPlaybackRate } = useAudioPlayer();
   const {
     settings,
     updateAudioQuality,
@@ -33,7 +35,7 @@ export default function ProfileScreen() {
   const [showDownloadSettingsModal, setShowDownloadSettingsModal] =
     useState(false);
   const [showCarModeModal, setShowCarModeModal] = useState(false);
-  const [showAutoPlayModal, setShowAutoPlayModal] = useState(false);
+  const [showPlaybackSettings, setShowPlaybackSettings] = useState(false);
 
   const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -306,7 +308,7 @@ export default function ProfileScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() => setShowAutoPlayModal(true)}
+              onPress={() => setShowPlaybackSettings(true)}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
@@ -315,7 +317,7 @@ export default function ProfileScreen() {
                   color={colors.icon}
                 />
                 <ThemedText style={styles.menuItemText}>
-                  Auto-Play Settings
+                  Playback Settings
                 </ThemedText>
               </View>
               <IconSymbol size={20} name="chevron.right" color={colors.icon} />
@@ -379,11 +381,13 @@ export default function ProfileScreen() {
         cardBgColor={cardBgColor}
       />
 
-      <AutoPlayModal
-        visible={showAutoPlayModal}
-        onClose={() => setShowAutoPlayModal(false)}
+      <PlaybackSettingsModal
+        visible={showPlaybackSettings}
+        onClose={() => setShowPlaybackSettings(false)}
+        currentRate={playbackState.playbackRate}
+        onRateChange={setPlaybackRate}
         autoPlay={settings.autoPlay}
-        onUpdateAutoPlay={updateAutoPlay}
+        onAutoPlayChange={updateAutoPlay}
         colors={colors}
         cardBgColor={cardBgColor}
       />

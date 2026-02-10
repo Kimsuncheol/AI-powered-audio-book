@@ -3,11 +3,11 @@ import { AlbumArtwork } from "@/components/player/AlbumArtwork";
 import { BookInfo } from "@/components/player/BookInfo";
 import { ChapterListPlayer } from "@/components/player/ChapterListPlayer";
 import { PlaybackControls } from "@/components/player/PlaybackControls";
-import { PlaybackRateMenu } from "@/components/player/PlaybackRateMenu";
 import { PlayerHeader } from "@/components/player/PlayerHeader";
 import { ProgressSlider } from "@/components/player/ProgressSlider";
 import { SecondaryControls } from "@/components/player/SecondaryControls";
 import { SleepTimerMenu } from "@/components/player/SleepTimerMenu";
+import { PlaybackSettingsModal } from "@/components/settings/PlaybackSettingsModal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Colors } from "@/constants/theme";
@@ -25,7 +25,7 @@ export default function PlayerScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { isGuest } = useAuth();
-  const { settings } = useSettings();
+  const { settings, updateAutoPlay } = useSettings();
   const {
     playbackState,
     togglePlayPause,
@@ -39,7 +39,7 @@ export default function PlayerScreen() {
     cancelSleepTimer,
   } = useAudioPlayer();
 
-  const [showPlaybackRates, setShowPlaybackRates] = useState(false);
+  const [showPlaybackSettings, setShowPlaybackSettings] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [limitReason, setLimitReason] = useState<"time" | "chapter">("time");
@@ -72,7 +72,6 @@ export default function PlayerScreen() {
 
   const handlePlaybackRateSelect = async (rate: number) => {
     await setPlaybackRate(rate);
-    setShowPlaybackRates(false);
   };
 
   const handleSleepTimerSelect = (minutes: number) => {
@@ -163,7 +162,7 @@ export default function PlayerScreen() {
           <SecondaryControls
             playbackRate={playbackState.playbackRate}
             isSleepTimerActive={playbackState.isSleepTimerActive}
-            onToggleRates={() => setShowPlaybackRates(!showPlaybackRates)}
+            onToggleRates={() => setShowPlaybackSettings(!showPlaybackSettings)}
             onToggleSleepTimer={() => {
               if (playbackState.isSleepTimerActive) {
                 handleCancelSleepTimer();
@@ -175,10 +174,19 @@ export default function PlayerScreen() {
             cardBgColor={cardBgColor}
           />
 
-          <PlaybackRateMenu
-            visible={showPlaybackRates}
+          <PlaybackSettingsModal
+            visible={showPlaybackSettings}
+            onClose={() => setShowPlaybackSettings(false)}
             currentRate={playbackState.playbackRate}
-            onSelect={handlePlaybackRateSelect}
+            onRateChange={handlePlaybackRateSelect}
+            autoPlay={settings?.autoPlay ?? {
+              autoPlayNextChapter: true,
+              autoPlayOnBluetooth: false,
+              autoPlayOnHeadphones: false,
+              autoResumeOnReturn: true,
+              continueAcrossBooks: false,
+            }}
+            onAutoPlayChange={updateAutoPlay}
             colors={colors}
             cardBgColor={cardBgColor}
           />
