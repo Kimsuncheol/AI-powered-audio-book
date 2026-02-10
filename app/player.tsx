@@ -153,6 +153,10 @@ export default function PlayerScreen() {
             onSkipBackward={() => skipBackward(15)}
             onPreviousChapter={previousChapter}
             onNextChapter={nextChapter}
+            onOpenPlaybackSettings={() =>
+              setShowPlaybackSettings(!showPlaybackSettings)
+            }
+            isPlaybackSettingsOpen={showPlaybackSettings}
             isGuest={isGuest}
             chapterIndex={playbackState.currentChapterIndex}
             onGuestLimit={handleGuestChapterLimit}
@@ -160,9 +164,7 @@ export default function PlayerScreen() {
           />
 
           <SecondaryControls
-            playbackRate={playbackState.playbackRate}
             isSleepTimerActive={playbackState.isSleepTimerActive}
-            onToggleRates={() => setShowPlaybackSettings(!showPlaybackSettings)}
             onToggleSleepTimer={() => {
               if (playbackState.isSleepTimerActive) {
                 handleCancelSleepTimer();
@@ -179,13 +181,15 @@ export default function PlayerScreen() {
             onClose={() => setShowPlaybackSettings(false)}
             currentRate={playbackState.playbackRate}
             onRateChange={handlePlaybackRateSelect}
-            autoPlay={settings?.autoPlay ?? {
-              autoPlayNextChapter: true,
-              autoPlayOnBluetooth: false,
-              autoPlayOnHeadphones: false,
-              autoResumeOnReturn: true,
-              continueAcrossBooks: false,
-            }}
+            autoPlay={
+              settings?.autoPlay ?? {
+                autoPlayNextChapter: true,
+                autoPlayOnBluetooth: false,
+                autoPlayOnHeadphones: false,
+                autoResumeOnReturn: true,
+                continueAcrossBooks: false,
+              }
+            }
             onAutoPlayChange={updateAutoPlay}
             colors={colors}
             cardBgColor={cardBgColor}
