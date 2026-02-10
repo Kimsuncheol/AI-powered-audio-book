@@ -29,7 +29,7 @@ export function RatingsOverview({
   const displayRating =
     ratingInfo.count > 0 ? ratingInfo.average : fallbackRating;
   const colorScheme = useColorScheme();
-  const textColor = colorScheme == "dark" ? "#FFFFFF" : "#000000";
+  const textColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   return (
     <View style={styles.section}>
@@ -59,6 +59,7 @@ export function RatingsOverview({
           </ThemedText>
         </View>
         {!alreadyReviewed && (
+          // write review button
           <Pressable
             style={[styles.writeReviewButton, { backgroundColor: colors.tint }]}
             onPress={onWriteReview}

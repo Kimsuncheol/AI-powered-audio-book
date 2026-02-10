@@ -1,4 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AudioBook } from "@/types/audiobook";
 import {
   Dimensions,
@@ -31,6 +32,9 @@ export function GenreFilterSection({
   cardBgColor,
   colors,
 }: GenreFilterSectionProps) {
+  const colorScheme = useColorScheme();
+  const activeTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
+  const inactiveTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
   return (
     <View style={styles.section}>
       <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -55,7 +59,12 @@ export function GenreFilterSection({
             <ThemedText
               style={[
                 styles.genreChipText,
-                selectedGenre === genre && styles.genreChipTextActive,
+                {
+                  color:
+                    selectedGenre === genre
+                      ? activeTextColor
+                      : inactiveTextColor,
+                },
               ]}
             >
               {genre}
@@ -80,6 +89,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     paddingHorizontal: 20,
+    marginBottom: 12,
   },
   genreScroll: {
     marginBottom: 16,
@@ -97,9 +107,6 @@ const styles = StyleSheet.create({
   genreChipText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  genreChipTextActive: {
-    color: "#FFFFFF",
   },
   compactGrid: {
     flexDirection: "row",

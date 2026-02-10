@@ -10,7 +10,6 @@ interface Chapter {
 
 interface ChapterListProps {
   chapters: Chapter[];
-  currentChapter: number;
   onChapterPress: (index: number) => void;
   colors: {
     tint: string;
@@ -21,7 +20,6 @@ interface ChapterListProps {
 
 export function ChapterList({
   chapters,
-  currentChapter,
   onChapterPress,
   colors,
   cardBgColor,
@@ -41,7 +39,6 @@ export function ChapterList({
           key={chapter.id}
           chapter={chapter}
           index={index}
-          isActive={currentChapter === index}
           onPress={() => onChapterPress(index)}
           colors={colors}
           cardBgColor={cardBgColor}

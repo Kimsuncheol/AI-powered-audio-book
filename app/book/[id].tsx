@@ -201,7 +201,6 @@ export default function BookDetailScreen() {
 
           <ChapterList
             chapters={book.chapters}
-            currentChapter={currentChapter}
             onChapterPress={handleChapterPress}
             colors={colors}
             cardBgColor={cardBgColor}

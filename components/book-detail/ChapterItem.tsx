@@ -1,5 +1,4 @@
 import { ThemedText } from "@/components/themed-text";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { formatDuration } from "@/data/mock-audiobooks";
 import { Pressable, StyleSheet, View } from "react-native";
 
@@ -10,7 +9,6 @@ interface ChapterItemProps {
     duration: number;
   };
   index: number;
-  isActive: boolean;
   onPress: () => void;
   colors: {
     tint: string;
@@ -22,40 +20,18 @@ interface ChapterItemProps {
 export function ChapterItem({
   chapter,
   index,
-  isActive,
   onPress,
   colors,
   cardBgColor,
 }: ChapterItemProps) {
   return (
     <Pressable
-      style={[
-        styles.chapterItem,
-        { backgroundColor: cardBgColor },
-        isActive && {
-          borderColor: colors.tint,
-          borderWidth: 2,
-        },
-      ]}
+      style={[styles.chapterItem, { backgroundColor: cardBgColor }]}
       onPress={onPress}
     >
       <View style={styles.chapterLeft}>
-        <View
-          style={[
-            styles.chapterNumber,
-            isActive && {
-              backgroundColor: colors.tint,
-            },
-          ]}
-        >
-          <ThemedText
-            style={[
-              styles.chapterNumberText,
-              isActive && styles.chapterNumberTextActive,
-            ]}
-          >
-            {index + 1}
-          </ThemedText>
+        <View style={styles.chapterNumber}>
+          <ThemedText style={styles.chapterNumberText}>{index + 1}</ThemedText>
         </View>
         <View style={styles.chapterInfo}>
           <ThemedText style={styles.chapterTitle}>{chapter.title}</ThemedText>
@@ -64,9 +40,6 @@ export function ChapterItem({
           </ThemedText>
         </View>
       </View>
-      {isActive && (
-        <IconSymbol size={20} name="speaker.wave.2.fill" color={colors.tint} />
-      )}
     </Pressable>
   );
 }
@@ -97,9 +70,6 @@ const styles = StyleSheet.create({
   chapterNumberText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  chapterNumberTextActive: {
-    color: "#FFFFFF",
   },
   chapterInfo: {
     flex: 1,
