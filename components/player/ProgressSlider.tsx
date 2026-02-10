@@ -34,10 +34,10 @@ export function ProgressSlider({
       />
       <View style={styles.timeContainer}>
         <ThemedText style={styles.timeText}>
-          {formatTime(Math.floor(position / 1000))}
+          {formatTime(Math.floor(position))}
         </ThemedText>
         <ThemedText style={styles.timeText}>
-          {formatTime(Math.floor(duration / 1000))}
+          {formatTime(Math.floor(duration))}
         </ThemedText>
       </View>
     </View>

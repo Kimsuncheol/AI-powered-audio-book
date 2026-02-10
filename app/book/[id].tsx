@@ -81,9 +81,10 @@ export default function BookDetailScreen() {
     if (book) {
       try {
         await loadBook(book, currentChapter);
-        router.push("/player");
       } catch (error) {
-        Alert.alert("Error", "Failed to load audiobook");
+        console.warn("Failed to load audiobook:", error);
+      } finally {
+        router.push("/player");
       }
     }
   };

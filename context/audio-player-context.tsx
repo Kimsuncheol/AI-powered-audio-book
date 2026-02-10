@@ -7,7 +7,7 @@ import {
   PlaybackState,
   SKIP_INTERVAL,
 } from "@/types/playback";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import React, {
   createContext,
   useContext,
@@ -43,18 +43,19 @@ export function AudioPlayerProvider({
 }: AudioPlayerProviderProps) {
   const [playbackState, setPlaybackState] =
     useState<PlaybackState>(initialPlaybackState);
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<AudioPlayer | null>(null);
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { isGuest } = useAuth();
 
   // Configure audio session
   useEffect(() => {
     const configureAudio = async () => {
       try {
-        await Audio.setAudioModeAsync({
-          staysActiveInBackground: true,
-          playsInSilentModeIOS: true,
-          shouldDuckAndroid: true,
+        await setAudioModeAsync({
+          shouldPlayInBackground: true,
+          playsInSilentMode: true,
+          interruptionMode: "duckOthers",
         });
       } catch (error) {
         console.error("Error configuring audio:", error);
@@ -64,62 +65,77 @@ export function AudioPlayerProvider({
 
     return () => {
       // Cleanup
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
+      if (playerRef.current) {
+        playerRef.current.remove();
       }
       if (sleepTimerRef.current) {
         clearTimeout(sleepTimerRef.current);
       }
+      if (statusIntervalRef.current) {
+        clearInterval(statusIntervalRef.current);
+      }
     };
   }, []);
 
-  // Update playback status
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
+  // Start polling for playback status updates
+  const startStatusPolling = () => {
+    // Clear any existing interval
+    if (statusIntervalRef.current) {
+      clearInterval(statusIntervalRef.current);
+    }
+
+    statusIntervalRef.current = setInterval(() => {
+      const player = playerRef.current;
+      if (!player) return;
+
       setPlaybackState((prev) => ({
         ...prev,
-        isPlaying: status.isPlaying,
-        position: status.positionMillis,
-        duration: status.durationMillis || 0,
+        isPlaying: player.playing,
+        position: player.currentTime,
+        duration: player.duration,
       }));
 
       // Guest mode preview limits
-      if (isGuest && playbackState.currentBook) {
-        // Check if time limit exceeded (5 minutes)
-        if (status.positionMillis > GUEST_TIME_LIMIT && status.isPlaying) {
+      if (isGuest && playerRef.current?.playing) {
+        if (player.currentTime > GUEST_TIME_LIMIT) {
           pause();
           onPreviewLimitReached?.("time");
         }
       }
+    }, 500);
+  };
 
-      // Auto-advance to next chapter when current one finishes
-      if (status.didJustFinish && !status.isLooping) {
-        nextChapter();
-      }
+  const stopStatusPolling = () => {
+    if (statusIntervalRef.current) {
+      clearInterval(statusIntervalRef.current);
+      statusIntervalRef.current = null;
     }
   };
 
   const loadBook = async (book: AudioBook, chapterIndex: number = 0) => {
     try {
-      // Unload previous sound if exists
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
+      // Remove previous player if exists
+      if (playerRef.current) {
+        stopStatusPolling();
+        playerRef.current.remove();
+        playerRef.current = null;
       }
 
-      // For demo purposes, we'll use a placeholder audio URL
-      // In production, you'd load the actual chapter audio file
+      // Get the audio URL for the chapter
       const audioUrl =
         book.chapters[chapterIndex].audioUrl ||
         "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: false },
-        onPlaybackStatusUpdate,
-      );
+      // Create new audio player
+      const player = createAudioPlayer({ uri: audioUrl });
+      playerRef.current = player;
 
-      soundRef.current = sound;
+      // Listen for playback status updates to detect end of track
+      player.addListener("playbackStatusUpdate", (status) => {
+        if (status.didJustFinish) {
+          nextChapter();
+        }
+      });
 
       setPlaybackState((prev) => ({
         ...prev,
@@ -127,6 +143,9 @@ export function AudioPlayerProvider({
         currentChapterIndex: chapterIndex,
         position: 0,
       }));
+
+      // Start polling for status updates
+      startStatusPolling();
     } catch (error) {
       console.error("Error loading book:", error);
       throw error;
@@ -135,8 +154,8 @@ export function AudioPlayerProvider({
 
   const play = async () => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.playAsync();
+      if (playerRef.current) {
+        playerRef.current.play();
       }
     } catch (error) {
       console.error("Error playing:", error);
@@ -145,8 +164,8 @@ export function AudioPlayerProvider({
 
   const pause = async () => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.pauseAsync();
+      if (playerRef.current) {
+        playerRef.current.pause();
       }
     } catch (error) {
       console.error("Error pausing:", error);
@@ -155,16 +174,16 @@ export function AudioPlayerProvider({
 
   const togglePlayPause = async () => {
     if (playbackState.isPlaying) {
-      await pause();
+      pause();
     } else {
-      await play();
+      play();
     }
   };
 
   const seekTo = async (position: number) => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.setPositionAsync(position);
+      if (playerRef.current) {
+        await playerRef.current.seekTo(position);
       }
     } catch (error) {
       console.error("Error seeking:", error);
@@ -173,23 +192,24 @@ export function AudioPlayerProvider({
 
   const skipForward = async (seconds: number = SKIP_INTERVAL) => {
     const newPosition = Math.min(
-      playbackState.position + seconds * 1000,
+      playbackState.position + seconds,
       playbackState.duration,
     );
     await seekTo(newPosition);
   };
 
   const skipBackward = async (seconds: number = SKIP_INTERVAL) => {
-    const newPosition = Math.max(playbackState.position - seconds * 1000, 0);
+    const newPosition = Math.max(playbackState.position - seconds, 0);
     await seekTo(newPosition);
   };
 
   const stopPlayback = async () => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
+      if (playerRef.current) {
+        playerRef.current.pause();
+        stopStatusPolling();
+        playerRef.current.remove();
+        playerRef.current = null;
       }
       setPlaybackState(initialPlaybackState);
     } catch (error) {
@@ -204,7 +224,7 @@ export function AudioPlayerProvider({
 
     // Guest mode: prevent access to chapters beyond the first one
     if (isGuest && nextIndex > GUEST_CHAPTER_LIMIT) {
-      await pause();
+      pause();
       onPreviewLimitReached?.("chapter");
       return;
     }
@@ -213,7 +233,7 @@ export function AudioPlayerProvider({
       const wasPlaying = playbackState.isPlaying;
       await loadBook(playbackState.currentBook, nextIndex);
       if (wasPlaying) {
-        await play();
+        play();
       }
     }
   };
@@ -222,7 +242,7 @@ export function AudioPlayerProvider({
     if (!playbackState.currentBook) return;
 
     // If we're more than 3 seconds into the chapter, restart it
-    if (playbackState.position > 3000) {
+    if (playbackState.position > 3) {
       await seekTo(0);
       return;
     }
@@ -233,15 +253,15 @@ export function AudioPlayerProvider({
       const wasPlaying = playbackState.isPlaying;
       await loadBook(playbackState.currentBook, prevIndex);
       if (wasPlaying) {
-        await play();
+        play();
       }
     }
   };
 
   const setPlaybackRate = async (rate: number) => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.setRateAsync(rate, true);
+      if (playerRef.current) {
+        playerRef.current.setPlaybackRate(rate);
         setPlaybackState((prev) => ({ ...prev, playbackRate: rate }));
       }
     } catch (error) {
@@ -251,8 +271,8 @@ export function AudioPlayerProvider({
 
   const setVolume = async (volume: number) => {
     try {
-      if (soundRef.current) {
-        await soundRef.current.setVolumeAsync(volume);
+      if (playerRef.current) {
+        playerRef.current.volume = volume;
         setPlaybackState((prev) => ({ ...prev, volume }));
       }
     } catch (error) {

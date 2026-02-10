@@ -1,38 +1,44 @@
-import { useEffect, useState } from 'react';
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { formatTime, MOCK_AUDIOBOOKS } from "@/data/mock-audiobooks";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import Slider from "@react-native-community/slider";
 import {
+  setAudioModeAsync,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+} from "expo-audio";
+import { Image } from "expo-image";
+import { router, Stack, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Pressable,
   StyleSheet,
   View,
-  Pressable,
-  Dimensions,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { Image } from 'expo-image';
-import { Audio } from 'expo-av';
-import Slider from '@react-native-community/slider';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { MOCK_AUDIOBOOKS, formatDuration, formatTime } from '@/data/mock-audiobooks';
+} from "react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function PlayerScreen() {
-  const { id, chapterId } = useLocalSearchParams<{ id: string; chapterId?: string }>();
+  const { id, chapterId } = useLocalSearchParams<{
+    id: string;
+    chapterId?: string;
+  }>();
   const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = Colors[colorScheme ?? "light"];
 
   const book = MOCK_AUDIOBOOKS.find((b) => b.id === id);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
+
+  // Create audio player with the book's audio URL
+  const audioSource = book ? { uri: book.audioUrl } : null;
+  const player = useAudioPlayer(audioSource);
+  const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
     if (book && chapterId) {
@@ -43,130 +49,87 @@ export default function PlayerScreen() {
     }
   }, [book, chapterId]);
 
+  // Configure audio mode
   useEffect(() => {
-    setupAudio();
-    return () => {
-      if (sound) {
-        sound.unloadAsync();
+    const setupAudio = async () => {
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "duckOthers",
+        });
+      } catch (error) {
+        console.error("Error setting up audio:", error);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setupAudio();
   }, []);
 
-  const setupAudio = async () => {
-    try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        staysActiveInBackground: true,
-        playsInSilentModeIOS: true,
-        shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
-      });
-    } catch (error) {
-      console.error('Error setting up audio:', error);
-    }
-  };
+  const handleNextChapter = useCallback(() => {
+    if (!book || currentChapterIndex >= book.chapters.length - 1) return;
+    setCurrentChapterIndex(currentChapterIndex + 1);
+    Alert.alert(
+      "Chapter Changed",
+      `Now playing: ${book.chapters[currentChapterIndex + 1].title}`,
+    );
+  }, [book, currentChapterIndex]);
 
-  const loadAudio = async () => {
-    if (!book) return;
-
-    try {
-      setIsLoading(true);
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: book.audioUrl },
-        { shouldPlay: true, rate: playbackSpeed },
-        onPlaybackStatusUpdate
+  // Auto-advance to next chapter when current one finishes
+  useEffect(() => {
+    if (player) {
+      const subscription = player.addListener(
+        "playbackStatusUpdate",
+        (s: { didJustFinish: boolean }) => {
+          if (s.didJustFinish) {
+            handleNextChapter();
+          }
+        },
       );
-      setSound(newSound);
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error loading audio:', error);
-      Alert.alert('Error', 'Failed to load audio. Please try again.');
-    } finally {
-      setIsLoading(false);
+      return () => subscription.remove();
     }
-  };
+  }, [player, handleNextChapter]);
 
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (status.isLoaded) {
-      setPosition(status.positionMillis / 1000);
-      setDuration(status.durationMillis ? status.durationMillis / 1000 : 0);
-      setIsPlaying(status.isPlaying);
-
-      if (status.didJustFinish) {
-        handleNextChapter();
-      }
-    }
-  };
-
-  const togglePlayPause = async () => {
-    if (!sound) {
-      await loadAudio();
-      return;
-    }
-
-    try {
-      if (isPlaying) {
-        await sound.pauseAsync();
-      } else {
-        await sound.playAsync();
-      }
-    } catch (error) {
-      console.error('Error toggling playback:', error);
+  const togglePlayPause = () => {
+    if (status.playing) {
+      player.pause();
+    } else {
+      player.play();
     }
   };
 
   const handleSeek = async (value: number) => {
-    if (sound) {
-      try {
-        await sound.setPositionAsync(value * 1000);
-      } catch (error) {
-        console.error('Error seeking:', error);
-      }
+    try {
+      await player.seekTo(value);
+    } catch (error) {
+      console.error("Error seeking:", error);
     }
   };
 
   const handleSkipForward = async () => {
-    if (sound) {
-      const newPosition = Math.min(position + 15, duration);
-      await handleSeek(newPosition);
-    }
+    const newPosition = Math.min(status.currentTime + 15, status.duration);
+    await handleSeek(newPosition);
   };
 
   const handleSkipBackward = async () => {
-    if (sound) {
-      const newPosition = Math.max(position - 15, 0);
-      await handleSeek(newPosition);
-    }
+    const newPosition = Math.max(status.currentTime - 15, 0);
+    await handleSeek(newPosition);
   };
 
-  const handleNextChapter = async () => {
-    if (!book || currentChapterIndex >= book.chapters.length - 1) return;
-
-    setCurrentChapterIndex(currentChapterIndex + 1);
-    Alert.alert('Chapter Changed', `Now playing: ${book.chapters[currentChapterIndex + 1].title}`);
-  };
-
-  const handlePreviousChapter = async () => {
+  const handlePreviousChapter = () => {
     if (!book || currentChapterIndex <= 0) return;
-
     setCurrentChapterIndex(currentChapterIndex - 1);
-    Alert.alert('Chapter Changed', `Now playing: ${book.chapters[currentChapterIndex - 1].title}`);
+    Alert.alert(
+      "Chapter Changed",
+      `Now playing: ${book.chapters[currentChapterIndex - 1].title}`,
+    );
   };
 
-  const cyclePlaybackSpeed = async () => {
+  const cyclePlaybackSpeed = () => {
     const speeds = [0.75, 1.0, 1.25, 1.5, 2.0];
-    const currentIndex = speeds.indexOf(playbackSpeed);
+    const currentRate = player.playbackRate;
+    const currentIndex = speeds.indexOf(currentRate);
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
-
-    setPlaybackSpeed(nextSpeed);
-    if (sound) {
-      try {
-        await sound.setRateAsync(nextSpeed, true);
-      } catch (error) {
-        console.error('Error changing speed:', error);
-      }
-    }
+    player.setPlaybackRate(nextSpeed);
   };
 
   if (!book) {
@@ -178,20 +141,25 @@ export default function PlayerScreen() {
   }
 
   const currentChapter = book.chapters[currentChapterIndex];
+  const isLoading = !status.playing && !status.currentTime && !status.duration;
 
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen
         options={{
           headerShown: true,
-          title: 'Now Playing',
-          headerBackTitle: 'Back',
+          title: "Now Playing",
+          headerBackTitle: "Back",
         }}
       />
 
       <View style={styles.content}>
         <View style={styles.coverSection}>
-          <Image source={{ uri: book.coverImage }} style={styles.coverImage} contentFit="cover" />
+          <Image
+            source={{ uri: book.coverImage }}
+            style={styles.coverImage}
+            contentFit="cover"
+          />
         </View>
 
         <View style={styles.infoSection}>
@@ -211,43 +179,60 @@ export default function PlayerScreen() {
           <Slider
             style={styles.slider}
             minimumValue={0}
-            maximumValue={duration}
-            value={position}
+            maximumValue={status.duration || 1}
+            value={status.currentTime}
             onSlidingComplete={handleSeek}
             minimumTrackTintColor={colors.tint}
-            maximumTrackTintColor={colorScheme === 'dark' ? '#333' : '#DDD'}
+            maximumTrackTintColor={colorScheme === "dark" ? "#333" : "#DDD"}
             thumbTintColor={colors.tint}
           />
           <View style={styles.timeRow}>
-            <ThemedText style={styles.timeText}>{formatTime(Math.floor(position))}</ThemedText>
-            <ThemedText style={styles.timeText}>{formatTime(Math.floor(duration))}</ThemedText>
+            <ThemedText style={styles.timeText}>
+              {formatTime(Math.floor(status.currentTime))}
+            </ThemedText>
+            <ThemedText style={styles.timeText}>
+              {formatTime(Math.floor(status.duration))}
+            </ThemedText>
           </View>
         </View>
 
         <View style={styles.controlsSection}>
           <Pressable onPress={cyclePlaybackSpeed} style={styles.speedButton}>
-            <ThemedText style={styles.speedText}>{playbackSpeed}x</ThemedText>
+            <ThemedText style={styles.speedText}>
+              {player.playbackRate}x
+            </ThemedText>
           </Pressable>
 
           <View style={styles.mainControls}>
-            <Pressable onPress={handlePreviousChapter} style={styles.controlButton}>
-              <IconSymbol size={32} name="backward.end.fill" color={colors.text} />
+            <Pressable
+              onPress={handlePreviousChapter}
+              style={styles.controlButton}
+            >
+              <IconSymbol
+                size={32}
+                name="backward.end.fill"
+                color={colors.text}
+              />
             </Pressable>
 
-            <Pressable onPress={handleSkipBackward} style={styles.controlButton}>
+            <Pressable
+              onPress={handleSkipBackward}
+              style={styles.controlButton}
+            >
               <IconSymbol size={28} name="gobackward.15" color={colors.text} />
             </Pressable>
 
             <Pressable
               onPress={togglePlayPause}
               style={[styles.playButton, { backgroundColor: colors.tint }]}
-              disabled={isLoading}>
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <ActivityIndicator size="large" color="#FFFFFF" />
               ) : (
                 <IconSymbol
                   size={40}
-                  name={isPlaying ? 'pause.fill' : 'play.fill'}
+                  name={status.playing ? "pause.fill" : "play.fill"}
                   color="#FFFFFF"
                 />
               )}
@@ -258,13 +243,20 @@ export default function PlayerScreen() {
             </Pressable>
 
             <Pressable onPress={handleNextChapter} style={styles.controlButton}>
-              <IconSymbol size={32} name="forward.end.fill" color={colors.text} />
+              <IconSymbol
+                size={32}
+                name="forward.end.fill"
+                color={colors.text}
+              />
             </Pressable>
           </View>
 
           <Pressable
-            onPress={() => Alert.alert('Coming Soon', 'Sleep timer feature coming soon!')}
-            style={styles.speedButton}>
+            onPress={() =>
+              Alert.alert("Coming Soon", "Sleep timer feature coming soon!")
+            }
+            style={styles.speedButton}
+          >
             <IconSymbol size={24} name="moon" color={colors.icon} />
           </Pressable>
         </View>
@@ -272,22 +264,33 @@ export default function PlayerScreen() {
         <View style={styles.additionalControls}>
           <Pressable
             style={styles.actionButton}
-            onPress={() => Alert.alert('Coming Soon', 'Bookmarks feature coming soon!')}>
+            onPress={() =>
+              Alert.alert("Coming Soon", "Bookmarks feature coming soon!")
+            }
+          >
             <IconSymbol size={22} name="bookmark" color={colors.icon} />
             <ThemedText style={styles.actionButtonText}>Bookmark</ThemedText>
           </Pressable>
 
           <Pressable
             style={styles.actionButton}
-            onPress={() => router.push(`/book/${book.id}`)}>
+            onPress={() => router.push(`/book/${book.id}`)}
+          >
             <IconSymbol size={22} name="list.bullet" color={colors.icon} />
             <ThemedText style={styles.actionButtonText}>Chapters</ThemedText>
           </Pressable>
 
           <Pressable
             style={styles.actionButton}
-            onPress={() => Alert.alert('Coming Soon', 'Share feature coming soon!')}>
-            <IconSymbol size={22} name="square.and.arrow.up" color={colors.icon} />
+            onPress={() =>
+              Alert.alert("Coming Soon", "Share feature coming soon!")
+            }
+          >
+            <IconSymbol
+              size={22}
+              name="square.and.arrow.up"
+              color={colors.icon}
+            />
             <ThemedText style={styles.actionButtonText}>Share</ThemedText>
           </Pressable>
         </View>
@@ -306,20 +309,20 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   coverSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   coverImage: {
     width: width * 0.7,
     height: width * 0.7,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
   infoSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   chapterLabel: {
@@ -329,7 +332,7 @@ const styles = StyleSheet.create({
   },
   bookTitle: {
     fontSize: 24,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 4,
   },
   chapterTitle: {
@@ -345,12 +348,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   slider: {
-    width: '100%',
+    width: "100%",
     height: 40,
   },
   timeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     paddingHorizontal: 4,
   },
   timeText: {
@@ -358,46 +361,46 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   controlsSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 30,
   },
   speedButton: {
     width: 50,
     height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   speedText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   mainControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
   },
   controlButton: {
     width: 50,
     height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   playButton: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   additionalControls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingTop: 20,
   },
   actionButton: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: 8,
   },
   actionButtonText: {
