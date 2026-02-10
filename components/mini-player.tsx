@@ -21,8 +21,13 @@ const TAB_BAR_HEIGHT = 80;
 export function MiniPlayer() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
-  const { playbackState, togglePlayPause, previousChapter, nextChapter } =
-    useAudioPlayer();
+  const {
+    playbackState,
+    togglePlayPause,
+    previousChapter,
+    nextChapter,
+    stopPlayback,
+  } = useAudioPlayer();
 
   // Shared values for dragging - MUST be called before any conditional returns
   const translateX = useSharedValue(0);
@@ -79,89 +84,106 @@ export function MiniPlayer() {
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.container, animatedStyle]}>
-        <Pressable
-          style={[styles.playerCard, { backgroundColor: cardBgColor }]}
-          onPress={() => router.push("/player")}
-        >
-          {/* Progress bar */}
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${progress}%`, backgroundColor: colors.tint },
-              ]}
-            />
-          </View>
+        <View style={styles.wrapper}>
+          {/* Close button - positioned outside card */}
+          <Pressable
+            style={[styles.closeButton, { backgroundColor: "#FF3B30" }]}
+            onPress={(e) => {
+              e.stopPropagation();
+              stopPlayback();
+            }}
+          >
+            <IconSymbol size={16} name="xmark" color="#FFFFFF" />
+          </Pressable>
 
-          <View style={styles.content}>
-            <Image
-              source={{ uri: book.coverImage }}
-              style={styles.cover}
-              contentFit="cover"
-            />
-
-            <View style={styles.info}>
-              <ThemedText style={styles.title} numberOfLines={1}>
-                {book.title}
-              </ThemedText>
-              <ThemedText style={styles.chapter} numberOfLines={1}>
-                {book.chapters[playbackState.currentChapterIndex]?.title}
-              </ThemedText>
+          <Pressable
+            style={[styles.playerCard, { backgroundColor: cardBgColor }]}
+            onPress={() => router.push("/player")}
+          >
+            {/* Progress bar */}
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${progress}%`, backgroundColor: colors.tint },
+                ]}
+              />
             </View>
 
-            <View style={styles.controls}>
-              {/* Previous button */}
-              <Pressable
-                style={[
-                  styles.controlButton,
-                  { backgroundColor: buttonBgColor },
-                ]}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  previousChapter();
-                }}
-              >
-                <IconSymbol
-                  size={22}
-                  name="backward.fill"
-                  color={colors.text}
-                />
-              </Pressable>
+            <View style={styles.content}>
+              <Image
+                source={{ uri: book.coverImage }}
+                style={styles.cover}
+                contentFit="cover"
+              />
 
-              {/* Play/Pause button */}
-              <Pressable
-                style={[
-                  styles.playButton,
-                  { backgroundColor: playButtonBgColor },
-                ]}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  togglePlayPause();
-                }}
-              >
-                <IconSymbol
-                  size={26}
-                  name={playbackState.isPlaying ? "pause.fill" : "play.fill"}
-                  color={colors.text}
-                />
-              </Pressable>
+              <View style={styles.info}>
+                <ThemedText style={styles.title} numberOfLines={1}>
+                  {book.title}
+                </ThemedText>
+                <ThemedText style={styles.chapter} numberOfLines={1}>
+                  {book.chapters[playbackState.currentChapterIndex]?.title}
+                </ThemedText>
+              </View>
 
-              {/* Next button */}
-              <Pressable
-                style={[
-                  styles.controlButton,
-                  { backgroundColor: buttonBgColor },
-                ]}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  nextChapter();
-                }}
-              >
-                <IconSymbol size={22} name="forward.fill" color={colors.text} />
-              </Pressable>
+              <View style={styles.controls}>
+                {/* Previous button */}
+                <Pressable
+                  style={[
+                    styles.controlButton,
+                    { backgroundColor: buttonBgColor },
+                  ]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    previousChapter();
+                  }}
+                >
+                  <IconSymbol
+                    size={22}
+                    name="backward.fill"
+                    color={colors.text}
+                  />
+                </Pressable>
+
+                {/* Play/Pause button */}
+                <Pressable
+                  style={[
+                    styles.playButton,
+                    { backgroundColor: playButtonBgColor },
+                  ]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    togglePlayPause();
+                  }}
+                >
+                  <IconSymbol
+                    size={26}
+                    name={playbackState.isPlaying ? "pause.fill" : "play.fill"}
+                    color={colors.text}
+                  />
+                </Pressable>
+
+                {/* Next button */}
+                <Pressable
+                  style={[
+                    styles.controlButton,
+                    { backgroundColor: buttonBgColor },
+                  ]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    nextChapter();
+                  }}
+                >
+                  <IconSymbol
+                    size={22}
+                    name="forward.fill"
+                    color={colors.text}
+                  />
+                </Pressable>
+              </View>
             </View>
-          </View>
-        </Pressable>
+          </Pressable>
+        </View>
       </Animated.View>
     </GestureDetector>
   );
@@ -174,6 +196,9 @@ const styles = StyleSheet.create({
     left: 8,
     right: 8,
     zIndex: 1000,
+  },
+  wrapper: {
+    position: "relative",
   },
   playerCard: {
     borderRadius: 16,
@@ -232,5 +257,16 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     justifyContent: "center",
     alignItems: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
   },
 });

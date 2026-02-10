@@ -1,4 +1,4 @@
-import { AudioBook } from './audiobook';
+import { AudioBook } from "./audiobook";
 
 export interface PlaybackState {
   currentBook: AudioBook | null;
@@ -27,7 +27,8 @@ export interface AudioPlayerContextType {
   setVolume: (volume: number) => Promise<void>;
   setSleepTimer: (minutes: number) => void;
   cancelSleepTimer: () => void;
-  onPreviewLimitReached?: (reason: 'time' | 'chapter') => void;
+  stopPlayback: () => Promise<void>;
+  onPreviewLimitReached?: (reason: "time" | "chapter") => void;
 }
 
 export const PLAYBACK_RATES = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];

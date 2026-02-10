@@ -1,16 +1,24 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { Audio, AVPlaybackStatus } from 'expo-av';
-import { AudioBook } from '@/types/audiobook';
-import { useAuth } from '@/context/auth-context';
+import { useAuth } from "@/context/auth-context";
+import { AudioBook } from "@/types/audiobook";
 import {
-  PlaybackState,
   AudioPlayerContextType,
-  SKIP_INTERVAL,
-  GUEST_TIME_LIMIT,
   GUEST_CHAPTER_LIMIT,
-} from '@/types/playback';
+  GUEST_TIME_LIMIT,
+  PlaybackState,
+  SKIP_INTERVAL,
+} from "@/types/playback";
+import { Audio, AVPlaybackStatus } from "expo-av";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);
+const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(
+  undefined,
+);
 
 const initialPlaybackState: PlaybackState = {
   currentBook: null,
@@ -26,11 +34,15 @@ const initialPlaybackState: PlaybackState = {
 
 interface AudioPlayerProviderProps {
   children: React.ReactNode;
-  onPreviewLimitReached?: (reason: 'time' | 'chapter') => void;
+  onPreviewLimitReached?: (reason: "time" | "chapter") => void;
 }
 
-export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPlayerProviderProps) {
-  const [playbackState, setPlaybackState] = useState<PlaybackState>(initialPlaybackState);
+export function AudioPlayerProvider({
+  children,
+  onPreviewLimitReached,
+}: AudioPlayerProviderProps) {
+  const [playbackState, setPlaybackState] =
+    useState<PlaybackState>(initialPlaybackState);
   const soundRef = useRef<Audio.Sound | null>(null);
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { isGuest } = useAuth();
@@ -45,7 +57,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
           shouldDuckAndroid: true,
         });
       } catch (error) {
-        console.error('Error configuring audio:', error);
+        console.error("Error configuring audio:", error);
       }
     };
     configureAudio();
@@ -76,7 +88,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         // Check if time limit exceeded (5 minutes)
         if (status.positionMillis > GUEST_TIME_LIMIT && status.isPlaying) {
           pause();
-          onPreviewLimitReached?.('time');
+          onPreviewLimitReached?.("time");
         }
       }
 
@@ -97,12 +109,14 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
 
       // For demo purposes, we'll use a placeholder audio URL
       // In production, you'd load the actual chapter audio file
-      const audioUrl = book.chapters[chapterIndex].audioUrl || 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+      const audioUrl =
+        book.chapters[chapterIndex].audioUrl ||
+        "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUrl },
         { shouldPlay: false },
-        onPlaybackStatusUpdate
+        onPlaybackStatusUpdate,
       );
 
       soundRef.current = sound;
@@ -114,7 +128,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         position: 0,
       }));
     } catch (error) {
-      console.error('Error loading book:', error);
+      console.error("Error loading book:", error);
       throw error;
     }
   };
@@ -125,7 +139,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         await soundRef.current.playAsync();
       }
     } catch (error) {
-      console.error('Error playing:', error);
+      console.error("Error playing:", error);
     }
   };
 
@@ -135,7 +149,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         await soundRef.current.pauseAsync();
       }
     } catch (error) {
-      console.error('Error pausing:', error);
+      console.error("Error pausing:", error);
     }
   };
 
@@ -153,14 +167,14 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         await soundRef.current.setPositionAsync(position);
       }
     } catch (error) {
-      console.error('Error seeking:', error);
+      console.error("Error seeking:", error);
     }
   };
 
   const skipForward = async (seconds: number = SKIP_INTERVAL) => {
     const newPosition = Math.min(
       playbackState.position + seconds * 1000,
-      playbackState.duration
+      playbackState.duration,
     );
     await seekTo(newPosition);
   };
@@ -168,6 +182,19 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
   const skipBackward = async (seconds: number = SKIP_INTERVAL) => {
     const newPosition = Math.max(playbackState.position - seconds * 1000, 0);
     await seekTo(newPosition);
+  };
+
+  const stopPlayback = async () => {
+    try {
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      setPlaybackState(initialPlaybackState);
+    } catch (error) {
+      console.error("Error stopping playback:", error);
+    }
   };
 
   const nextChapter = async () => {
@@ -178,7 +205,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
     // Guest mode: prevent access to chapters beyond the first one
     if (isGuest && nextIndex > GUEST_CHAPTER_LIMIT) {
       await pause();
-      onPreviewLimitReached?.('chapter');
+      onPreviewLimitReached?.("chapter");
       return;
     }
 
@@ -218,7 +245,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         setPlaybackState((prev) => ({ ...prev, playbackRate: rate }));
       }
     } catch (error) {
-      console.error('Error setting playback rate:', error);
+      console.error("Error setting playback rate:", error);
     }
   };
 
@@ -229,7 +256,7 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
         setPlaybackState((prev) => ({ ...prev, volume }));
       }
     } catch (error) {
-      console.error('Error setting volume:', error);
+      console.error("Error setting volume:", error);
     }
   };
 
@@ -241,14 +268,17 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
 
     const endTime = Date.now() + minutes * 60 * 1000;
 
-    sleepTimerRef.current = setTimeout(() => {
-      pause();
-      setPlaybackState((prev) => ({
-        ...prev,
-        isSleepTimerActive: false,
-        sleepTimerEndTime: null,
-      }));
-    }, minutes * 60 * 1000);
+    sleepTimerRef.current = setTimeout(
+      () => {
+        pause();
+        setPlaybackState((prev) => ({
+          ...prev,
+          isSleepTimerActive: false,
+          sleepTimerEndTime: null,
+        }));
+      },
+      minutes * 60 * 1000,
+    );
 
     setPlaybackState((prev) => ({
       ...prev,
@@ -285,16 +315,23 @@ export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPl
     setVolume,
     setSleepTimer,
     cancelSleepTimer,
+    stopPlayback,
     onPreviewLimitReached,
   };
 
-  return <AudioPlayerContext.Provider value={value}>{children}</AudioPlayerContext.Provider>;
+  return (
+    <AudioPlayerContext.Provider value={value}>
+      {children}
+    </AudioPlayerContext.Provider>
+  );
 }
 
 export function useAudioPlayer() {
   const context = useContext(AudioPlayerContext);
   if (context === undefined) {
-    throw new Error('useAudioPlayer must be used within an AudioPlayerProvider');
+    throw new Error(
+      "useAudioPlayer must be used within an AudioPlayerProvider",
+    );
   }
   return context;
 }
