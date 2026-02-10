@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface FavoritesEmptyStateProps {
@@ -16,6 +17,9 @@ export function FavoritesEmptyState({
   colors,
   onSignUpPress,
 }: FavoritesEmptyStateProps) {
+  const theme = useColorScheme();
+  const textColor = theme === "dark" ? "#000000" : "#FFFFFF";
+
   return (
     <View style={styles.emptyState}>
       <View
@@ -40,7 +44,7 @@ export function FavoritesEmptyState({
           style={[styles.signUpButton, { backgroundColor: colors.tint }]}
           onPress={onSignUpPress}
         >
-          <ThemedText style={styles.signUpButtonText}>
+          <ThemedText style={[styles.signUpButtonText, { color: textColor }]}>
             Create Free Account
           </ThemedText>
         </Pressable>
@@ -84,6 +88,5 @@ const styles = StyleSheet.create({
   signUpButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FFFFFF",
   },
 });
