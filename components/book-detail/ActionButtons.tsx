@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface ActionButtonsProps {
@@ -34,10 +35,10 @@ export function ActionButtons({
         </ThemedText>
       </Pressable>
       <Pressable
-        style={[styles.downloadButton, { backgroundColor: cardBgColor }]}
+        style={[styles.downloadButton, { backgroundColor: colors.tint }]}
         onPress={onDownload}
       >
-        <IconSymbol size={24} name="arrow.down.circle" color={colors.text} />
+        <Ionicons size={24} name="download-outline" color={textColor} />
       </Pressable>
     </View>
   );

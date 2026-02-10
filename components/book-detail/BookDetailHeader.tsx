@@ -1,4 +1,5 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface BookDetailHeaderProps {
@@ -28,7 +29,7 @@ export function BookDetailHeader({
         style={[styles.headerButton, { backgroundColor: cardBgColor }]}
         onPress={onShare}
       >
-        <IconSymbol size={24} name="square.and.arrow.up" color={colors.text} />
+        <Ionicons size={24} name="share-social-outline" color={colors.text} />
       </Pressable>
     </View>
   );

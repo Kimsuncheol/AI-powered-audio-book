@@ -1,15 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Review } from "@/context/reviews-context";
 import { StyleSheet, View } from "react-native";
-
-interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
 
 interface ReviewItemProps {
   review: Review;
@@ -55,7 +47,7 @@ export function ReviewItem({
           ))}
         </View>
       </View>
-      <ThemedText style={styles.reviewText}>{review.comment}</ThemedText>
+      <ThemedText style={styles.reviewText}>{review.text}</ThemedText>
     </View>
   );
 }

@@ -1,10 +1,10 @@
-import { Modal, Pressable, StyleSheet, View } from "react-native";
-import { useRouter } from "expo-router";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useRouter } from "expo-router";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 
 interface SignUpPromptModalProps {
   visible: boolean;
@@ -17,35 +17,46 @@ const FEATURE_CONFIG = {
   favorites: {
     icon: "heart.fill" as const,
     title: "Save Your Favorites",
-    description: "Create a free account to save your favorite audiobooks and access them across all your devices.",
+    description:
+      "Create a free account to save your favorite audiobooks and access them across all your devices.",
   },
   fullPlayback: {
     icon: "play.circle.fill" as const,
     title: "Unlock Full Access",
-    description: "Sign up for a free account to listen to complete audiobooks without time limits.",
+    description:
+      "Sign up for a free account to listen to complete audiobooks without time limits.",
   },
   progress: {
     icon: "chart.bar.fill" as const,
     title: "Track Your Progress",
-    description: "Create an account to automatically save your listening progress and resume where you left off on any device.",
+    description:
+      "Create an account to automatically save your listening progress and resume where you left off on any device.",
   },
   reviews: {
     icon: "star.fill" as const,
     title: "Share Your Thoughts",
-    description: "Sign up to write reviews and help others discover great audiobooks.",
+    description:
+      "Sign up to write reviews and help others discover great audiobooks.",
   },
   download: {
     icon: "arrow.down.circle.fill" as const,
     title: "Download for Offline",
-    description: "Create an account to download audiobooks and listen offline anytime, anywhere.",
+    description:
+      "Create an account to download audiobooks and listen offline anytime, anywhere.",
   },
 };
 
-export function SignUpPromptModal({ visible, onClose, feature, bookTitle }: SignUpPromptModalProps) {
+export function SignUpPromptModal({
+  visible,
+  onClose,
+  feature,
+  bookTitle,
+}: SignUpPromptModalProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const router = useRouter();
   const config = FEATURE_CONFIG[feature];
+  const textColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const handleSignUp = () => {
     onClose();
@@ -58,15 +69,31 @@ export function SignUpPromptModal({ visible, onClose, feature, bookTitle }: Sign
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
-        <ThemedView style={[styles.modal, { backgroundColor: colors.background }]}>
+        <ThemedView
+          style={[styles.modal, { backgroundColor: colors.background }]}
+        >
           <Pressable style={styles.closeButton} onPress={onClose}>
-            <IconSymbol name="xmark.circle.fill" size={28} color={colors.icon} />
+            <IconSymbol
+              name="xmark.circle.fill"
+              size={28}
+              color={colors.icon}
+            />
           </Pressable>
 
           <View style={styles.content}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.tint + "20" }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: colors.tint + "20" },
+              ]}
+            >
               <IconSymbol name={config.icon} size={48} color={colors.tint} />
             </View>
 
@@ -74,10 +101,17 @@ export function SignUpPromptModal({ visible, onClose, feature, bookTitle }: Sign
               {config.title}
             </ThemedText>
 
-            <ThemedText style={styles.description}>{config.description}</ThemedText>
+            <ThemedText style={styles.description}>
+              {config.description}
+            </ThemedText>
 
             {bookTitle && (
-              <View style={[styles.bookInfo, { backgroundColor: colors.background }]}>
+              <View
+                style={[
+                  styles.bookInfo,
+                  { backgroundColor: colors.background },
+                ]}
+              >
                 <IconSymbol name="book.fill" size={16} color={colors.icon} />
                 <ThemedText style={styles.bookTitle} numberOfLines={1}>
                   {bookTitle}
@@ -87,12 +121,22 @@ export function SignUpPromptModal({ visible, onClose, feature, bookTitle }: Sign
           </View>
 
           <View style={styles.buttons}>
-            <Pressable style={[styles.button, { backgroundColor: colors.tint }]} onPress={handleSignUp}>
-              <ThemedText style={styles.buttonText}>Sign Up Free</ThemedText>
+            <Pressable
+              style={[styles.button, { backgroundColor: colors.tint }]}
+              onPress={handleSignUp}
+            >
+              <ThemedText style={[styles.buttonText, { color: textColor }]}>
+                Sign Up Free
+              </ThemedText>
             </Pressable>
 
-            <Pressable style={[styles.button, styles.buttonOutline]} onPress={handleLogin}>
-              <ThemedText style={[styles.buttonText, { color: colors.tint }]}>Log In</ThemedText>
+            <Pressable
+              style={[styles.button, styles.buttonOutline]}
+              onPress={handleLogin}
+            >
+              <ThemedText style={[styles.buttonText, { color: colors.tint }]}>
+                Log In
+              </ThemedText>
             </Pressable>
           </View>
         </ThemedView>
@@ -179,7 +223,7 @@ const styles = StyleSheet.create({
   buttonOutline: {
     backgroundColor: "transparent",
     borderWidth: 2,
-    borderColor: "#007AFF",
+    borderColor: "#ffffff",
   },
   buttonText: {
     fontSize: 18,

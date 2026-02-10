@@ -43,7 +43,7 @@ export default function LibraryScreen() {
       book.author.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const inputBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
+  const inputBgColor = colorScheme === "dark" ? "#3C3C3C" : "#F2F2F7";
   const inputTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
   const placeholderColor = colorScheme === "dark" ? "#8E8E93" : "#999";
 

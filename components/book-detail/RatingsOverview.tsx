@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface RatingsOverviewProps {
@@ -27,6 +28,8 @@ export function RatingsOverview({
 }: RatingsOverviewProps) {
   const displayRating =
     ratingInfo.count > 0 ? ratingInfo.average : fallbackRating;
+  const colorScheme = useColorScheme();
+  const textColor = colorScheme == "dark" ? "#FFFFFF" : "#000000";
 
   return (
     <View style={styles.section}>
@@ -60,8 +63,10 @@ export function RatingsOverview({
             style={[styles.writeReviewButton, { backgroundColor: colors.tint }]}
             onPress={onWriteReview}
           >
-            <IconSymbol size={18} name="pencil" color="#FFFFFF" />
-            <ThemedText style={styles.writeReviewButtonText}>
+            <IconSymbol size={18} name="pencil" color={textColor} />
+            <ThemedText
+              style={[styles.writeReviewButtonText, { color: textColor }]}
+            >
               Write Review
             </ThemedText>
           </Pressable>
@@ -118,7 +123,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   writeReviewButtonText: {
-    color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
   },

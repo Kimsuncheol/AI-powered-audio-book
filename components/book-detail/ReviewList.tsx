@@ -1,14 +1,6 @@
+import { Review } from "@/context/reviews-context";
 import { StyleSheet, View } from "react-native";
 import { ReviewItem } from "./ReviewItem";
-
-interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  rating: number;
-  comment: string;
-  createdAt: string;
-}
 
 interface ReviewListProps {
   reviews: Review[];
