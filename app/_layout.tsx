@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/context/auth-context';
@@ -54,16 +55,18 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <FavoritesProvider>
-        <ProgressProvider>
-          <ReviewsProvider>
-            <AudioPlayerProvider>
-              <RootLayoutNav />
-            </AudioPlayerProvider>
-          </ReviewsProvider>
-        </ProgressProvider>
-      </FavoritesProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <FavoritesProvider>
+          <ProgressProvider>
+            <ReviewsProvider>
+              <AudioPlayerProvider>
+                <RootLayoutNav />
+              </AudioPlayerProvider>
+            </ReviewsProvider>
+          </ProgressProvider>
+        </FavoritesProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
