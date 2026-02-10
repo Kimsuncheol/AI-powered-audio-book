@@ -1,10 +1,11 @@
 import { StyleSheet, View, Pressable, FlatList, Dimensions } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useFavorites } from '@/context/favorites-context';
 import { MOCK_AUDIOBOOKS, formatDuration } from '@/data/mock-audiobooks';
@@ -15,6 +16,8 @@ const { width } = Dimensions.get('window');
 export default function FavoritesScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { isGuest } = useAuth();
+  const router = useRouter();
   const { favorites, toggleFavorite } = useFavorites();
 
   const favoriteBooks = MOCK_AUDIOBOOKS.filter((book) => favorites.includes(book.id));
@@ -63,11 +66,25 @@ export default function FavoritesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <IconSymbol size={60} name="heart" color={colors.icon} />
-            <ThemedText style={styles.emptyText}>No favorites yet</ThemedText>
-            <ThemedText style={styles.emptySubtext}>
-              Tap the heart icon on any book to save it here
+            <View style={[styles.iconContainer, { backgroundColor: colors.tint + '20' }]}>
+              <IconSymbol size={48} name={isGuest ? "lock.fill" : "heart"} color={isGuest ? colors.tint : colors.icon} />
+            </View>
+            <ThemedText style={styles.emptyText}>
+              {isGuest ? "Sign Up to Save Favorites" : "No favorites yet"}
             </ThemedText>
+            <ThemedText style={styles.emptySubtext}>
+              {isGuest
+                ? "Create a free account to save your favorite audiobooks and access them across all your devices."
+                : "Tap the heart icon on any book to save it here"}
+            </ThemedText>
+            {isGuest && (
+              <Pressable
+                style={[styles.signUpButton, { backgroundColor: colors.tint }]}
+                onPress={() => router.push('/(auth)/sign-up')}
+              >
+                <ThemedText style={styles.signUpButtonText}>Create Free Account</ThemedText>
+              </Pressable>
+            )}
           </View>
         }
       />
@@ -144,16 +161,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 80,
+    paddingHorizontal: 32,
+  },
+  iconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 16,
+    marginTop: 20,
   },
   emptySubtext: {
     fontSize: 14,
     opacity: 0.7,
-    marginTop: 4,
+    marginTop: 8,
     textAlign: 'center',
+    lineHeight: 20,
+  },
+  signUpButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 24,
+  },
+  signUpButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

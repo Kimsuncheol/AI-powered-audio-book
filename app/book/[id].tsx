@@ -1,7 +1,9 @@
+import { SignUpPromptModal } from "@/components/auth/SignUpPromptModal";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
+import { useAuth } from "@/context/auth-context";
 import { useAudioPlayer } from "@/context/audio-player-context";
 import { useFavorites } from "@/context/favorites-context";
 import { useReviews, Review } from "@/context/reviews-context";
@@ -29,6 +31,7 @@ export default function BookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
+  const { isGuest } = useAuth();
   const { loadBook } = useAudioPlayer();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
   const { getReviewsForBook, getAverageRating, addReview, hasUserReviewed } = useReviews();
@@ -38,6 +41,8 @@ export default function BookDetailScreen() {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [signUpFeature, setSignUpFeature] = useState<'favorites' | 'fullPlayback' | 'reviews' | 'download' | 'progress'>('favorites');
 
   useEffect(() => {
     // Find the book by ID
@@ -82,6 +87,11 @@ export default function BookDetailScreen() {
   };
 
   const handleDownload = () => {
+    if (isGuest) {
+      setSignUpFeature('download');
+      setShowSignUpModal(true);
+      return;
+    }
     Alert.alert("Download", "Download functionality coming soon!");
   };
 
@@ -95,7 +105,21 @@ export default function BookDetailScreen() {
   const alreadyReviewed = book ? hasUserReviewed(book.id) : false;
 
   const handleToggleFavorite = () => {
+    if (isGuest) {
+      setSignUpFeature('favorites');
+      setShowSignUpModal(true);
+      return;
+    }
     if (book) toggleFavorite(book.id);
+  };
+
+  const handleWriteReview = () => {
+    if (isGuest) {
+      setSignUpFeature('reviews');
+      setShowSignUpModal(true);
+      return;
+    }
+    setShowReviewModal(true);
   };
 
   const handleSubmitReview = () => {
@@ -367,7 +391,7 @@ export default function BookDetailScreen() {
                     styles.writeReviewButton,
                     { backgroundColor: colors.tint },
                   ]}
-                  onPress={() => setShowReviewModal(true)}
+                  onPress={handleWriteReview}
                 >
                   <ThemedText style={styles.writeReviewText}>
                     Write a Review
@@ -468,6 +492,14 @@ export default function BookDetailScreen() {
             </View>
           </Modal>
         </ScrollView>
+
+        {/* Sign Up Modal for Guest Users */}
+        <SignUpPromptModal
+          visible={showSignUpModal}
+          onClose={() => setShowSignUpModal(false)}
+          feature={signUpFeature}
+          bookTitle={book.title}
+        />
       </SafeAreaView>
     </ThemedView>
   );

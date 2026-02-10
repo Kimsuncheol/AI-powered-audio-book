@@ -10,20 +10,23 @@ import {
 import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import Slider from '@react-native-community/slider';
+import { SignUpPromptModal } from '@/components/auth/SignUpPromptModal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAudioPlayer } from '@/context/audio-player-context';
 import { formatDuration } from '@/data/mock-audiobooks';
-import { PLAYBACK_RATES } from '@/types/playback';
+import { PLAYBACK_RATES, GUEST_TIME_LIMIT } from '@/types/playback';
 
 const { width } = Dimensions.get('window');
 
 export default function PlayerScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { isGuest } = useAuth();
   const {
     playbackState,
     togglePlayPause,
@@ -39,11 +42,24 @@ export default function PlayerScreen() {
 
   const [showPlaybackRates, setShowPlaybackRates] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [limitReason, setLimitReason] = useState<'time' | 'chapter'>('time');
 
   const book = playbackState.currentBook;
   const currentChapter = book?.chapters[playbackState.currentChapterIndex];
 
   const cardBgColor = colorScheme === 'dark' ? '#1C1C1E' : '#F2F2F7';
+
+  // Handle preview limit reached
+  useEffect(() => {
+    if (isGuest && playbackState.currentBook) {
+      // Check time limit
+      if (playbackState.position > GUEST_TIME_LIMIT && playbackState.isPlaying) {
+        setLimitReason('time');
+        setShowSignUpModal(true);
+      }
+    }
+  }, [isGuest, playbackState.position, playbackState.isPlaying, playbackState.currentBook]);
 
   const handleSeek = async (value: number) => {
     await seekTo(value);
@@ -108,6 +124,16 @@ export default function PlayerScreen() {
           </ThemedText>
           <ThemedText style={styles.bookAuthor}>{book.author}</ThemedText>
           <ThemedText style={styles.chapterTitle}>{currentChapter?.title}</ThemedText>
+
+          {/* Guest Preview Badge */}
+          {isGuest && (
+            <View style={[styles.previewBadge, { backgroundColor: colors.tint + '20', borderColor: colors.tint }]}>
+              <IconSymbol size={14} name="eye.fill" color={colors.tint} />
+              <ThemedText style={[styles.previewText, { color: colors.tint }]}>
+                Preview Mode • First Chapter • 5 min limit
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {/* Progress Slider */}
@@ -156,8 +182,23 @@ export default function PlayerScreen() {
             <IconSymbol size={32} name="goforward.15" color={colors.text} />
           </Pressable>
 
-          <Pressable style={styles.controlButton} onPress={nextChapter}>
-            <IconSymbol size={32} name="forward.end.fill" color={colors.text} />
+          <Pressable
+            style={styles.controlButton}
+            onPress={() => {
+              if (isGuest && playbackState.currentChapterIndex >= 0) {
+                setLimitReason('chapter');
+                setShowSignUpModal(true);
+              } else {
+                nextChapter();
+              }
+            }}
+            disabled={isGuest && playbackState.currentChapterIndex >= 0}
+          >
+            <IconSymbol
+              size={32}
+              name="forward.end.fill"
+              color={isGuest && playbackState.currentChapterIndex >= 0 ? colors.icon + '40' : colors.text}
+            />
           </Pressable>
         </View>
 
@@ -284,6 +325,14 @@ export default function PlayerScreen() {
           ))}
         </View>
       </ScrollView>
+
+      {/* Sign Up Modal for Guest Users */}
+      <SignUpPromptModal
+        visible={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        feature="fullPlayback"
+        bookTitle={book.title}
+      />
     </ThemedView>
   );
 }
@@ -502,5 +551,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  previewBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 12,
+  },
+  previewText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
 });

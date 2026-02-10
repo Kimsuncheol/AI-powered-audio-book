@@ -17,7 +17,7 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -26,15 +26,15 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
 
-    if (!user && !inAuthGroup) {
-      // Redirect to welcome if not authenticated
+    if (!user && !isGuest && !inAuthGroup) {
+      // Redirect to welcome if not authenticated and not in guest mode
       router.replace('/(auth)/welcome');
-    } else if (user && inAuthGroup) {
-      // Redirect to tabs if authenticated and in auth group
+    } else if ((user || isGuest) && inAuthGroup) {
+      // Redirect to tabs if authenticated or in guest mode and in auth group
       router.replace('/(tabs)');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, segments]);
+  }, [user, loading, isGuest, segments]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

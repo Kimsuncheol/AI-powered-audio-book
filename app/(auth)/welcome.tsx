@@ -1,14 +1,17 @@
 import { StyleSheet, View, Pressable } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
+import { useAuth } from '@/context/auth-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function WelcomeScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
+  const { enterGuestMode } = useAuth();
 
   return (
     <ThemedView style={styles.container}>
@@ -59,6 +62,18 @@ export default function WelcomeScreen() {
             </ThemedText>
           </Pressable>
         </Link>
+
+        <Pressable
+          style={styles.buttonGuest}
+          onPress={async () => {
+            await enterGuestMode();
+            router.push('/(tabs)');
+          }}
+        >
+          <ThemedText style={[styles.buttonTextSecondary, { color: colors.text }]}>
+            Browse as Guest
+          </ThemedText>
+        </Pressable>
       </View>
     </ThemedView>
   );
@@ -115,5 +130,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  buttonGuest: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  buttonTextSecondary: {
+    fontSize: 16,
+    fontWeight: '500',
+    opacity: 0.7,
   },
 });

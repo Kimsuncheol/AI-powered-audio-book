@@ -1,10 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { AudioBook } from '@/types/audiobook';
+import { useAuth } from '@/context/auth-context';
 import {
   PlaybackState,
   AudioPlayerContextType,
   SKIP_INTERVAL,
+  GUEST_TIME_LIMIT,
+  GUEST_CHAPTER_LIMIT,
 } from '@/types/playback';
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(undefined);
@@ -21,10 +24,16 @@ const initialPlaybackState: PlaybackState = {
   sleepTimerEndTime: null,
 };
 
-export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
+interface AudioPlayerProviderProps {
+  children: React.ReactNode;
+  onPreviewLimitReached?: (reason: 'time' | 'chapter') => void;
+}
+
+export function AudioPlayerProvider({ children, onPreviewLimitReached }: AudioPlayerProviderProps) {
   const [playbackState, setPlaybackState] = useState<PlaybackState>(initialPlaybackState);
   const soundRef = useRef<Audio.Sound | null>(null);
-  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isGuest } = useAuth();
 
   // Configure audio session
   useEffect(() => {
@@ -61,6 +70,15 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         position: status.positionMillis,
         duration: status.durationMillis || 0,
       }));
+
+      // Guest mode preview limits
+      if (isGuest && playbackState.currentBook) {
+        // Check if time limit exceeded (5 minutes)
+        if (status.positionMillis > GUEST_TIME_LIMIT && status.isPlaying) {
+          pause();
+          onPreviewLimitReached?.('time');
+        }
+      }
 
       // Auto-advance to next chapter when current one finishes
       if (status.didJustFinish && !status.isLooping) {
@@ -156,6 +174,14 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!playbackState.currentBook) return;
 
     const nextIndex = playbackState.currentChapterIndex + 1;
+
+    // Guest mode: prevent access to chapters beyond the first one
+    if (isGuest && nextIndex > GUEST_CHAPTER_LIMIT) {
+      await pause();
+      onPreviewLimitReached?.('chapter');
+      return;
+    }
+
     if (nextIndex < playbackState.currentBook.chapters.length) {
       const wasPlaying = playbackState.isPlaying;
       await loadBook(playbackState.currentBook, nextIndex);
@@ -259,6 +285,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     setVolume,
     setSleepTimer,
     cancelSleepTimer,
+    onPreviewLimitReached,
   };
 
   return <AudioPlayerContext.Provider value={value}>{children}</AudioPlayerContext.Provider>;

@@ -26,7 +26,7 @@ const CARD_WIDTH = (width - 60) / 2; // 2 columns with padding
 export default function LibraryScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const { getInProgressBooks, getProgress } = useProgress();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -78,7 +78,7 @@ export default function LibraryScreen() {
       <View style={styles.header}>
         <View>
           <ThemedText type="title" style={styles.greeting}>
-            Hello, {user?.displayName || 'Reader'}!
+            Hello, {isGuest ? 'Guest' : user?.displayName || 'Reader'}!
           </ThemedText>
           <ThemedText style={styles.subtitle}>What will you listen to today?</ThemedText>
         </View>
@@ -101,7 +101,7 @@ export default function LibraryScreen() {
       </View>
 
       {/* Continue Listening Section */}
-      {continueListeningBooks.length > 0 && searchQuery.length === 0 && (
+      {!isGuest && continueListeningBooks.length > 0 && searchQuery.length === 0 && (
         <View style={styles.continueSection}>
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle" style={styles.sectionTitle}>

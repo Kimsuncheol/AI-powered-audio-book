@@ -27,7 +27,12 @@ export interface AudioPlayerContextType {
   setVolume: (volume: number) => Promise<void>;
   setSleepTimer: (minutes: number) => void;
   cancelSleepTimer: () => void;
+  onPreviewLimitReached?: (reason: 'time' | 'chapter') => void;
 }
 
 export const PLAYBACK_RATES = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 export const SKIP_INTERVAL = 15; // seconds
+
+// Guest mode preview limits
+export const GUEST_TIME_LIMIT = 5 * 60 * 1000; // 5 minutes in milliseconds
+export const GUEST_CHAPTER_LIMIT = 0; // Only first chapter (index 0)
