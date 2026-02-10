@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface ActionButtonsProps {
@@ -18,14 +19,19 @@ export function ActionButtons({
   colors,
   cardBgColor,
 }: ActionButtonsProps) {
+  const theme = useColorScheme();
+  const textColor = theme === "dark" ? "#000000" : "#FFFFFF";
+
   return (
     <View style={styles.actionButtons}>
       <Pressable
         style={[styles.playButton, { backgroundColor: colors.tint }]}
         onPress={onPlay}
       >
-        <IconSymbol size={24} name="play.fill" color="#FFFFFF" />
-        <ThemedText style={styles.playButtonText}>Play Now</ThemedText>
+        <IconSymbol size={24} name="play.fill" color={textColor} />
+        <ThemedText style={[styles.playButtonText, { color: textColor }]}>
+          Play Now
+        </ThemedText>
       </Pressable>
       <Pressable
         style={[styles.downloadButton, { backgroundColor: cardBgColor }]}
@@ -54,7 +60,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   playButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
