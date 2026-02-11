@@ -26,6 +26,11 @@ export function NotificationsModal({
   colors,
   cardBgColor,
 }: NotificationsModalProps) {
+  const tintButtonTextColor =
+    colors.tint.toLowerCase() === "#fff" || colors.tint.toLowerCase() === "#ffffff"
+      ? "#000000"
+      : "#FFFFFF";
+
   const handleToggle = (key: keyof NotificationSettings) => {
     onUpdateNotifications({
       ...notifications,
@@ -100,7 +105,9 @@ export function NotificationsModal({
             style={[styles.doneButton, { backgroundColor: colors.tint }]}
             onPress={onClose}
           >
-            <ThemedText style={styles.doneButtonText}>Done</ThemedText>
+            <ThemedText style={[styles.doneButtonText, { color: tintButtonTextColor }]}>
+              Done
+            </ThemedText>
           </Pressable>
         </View>
       </View>
@@ -135,7 +142,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   doneButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },

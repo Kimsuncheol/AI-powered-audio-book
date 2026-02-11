@@ -48,6 +48,7 @@ export default function UsersScreen() {
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
   const cardBorderColor = colorScheme === "dark" ? "#2C2C2E" : "#E5E5EA";
   const modalBgColor = colorScheme === "dark" ? "#1C1C1E" : "#FFFFFF";
+  const tintButtonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   useEffect(() => {
     loadUsers();
@@ -783,7 +784,9 @@ export default function UsersScreen() {
                   size={20}
                   color="#FFFFFF"
                 />
-                <ThemedText style={styles.bulkActionButtonText}>
+                <ThemedText
+                  style={[styles.bulkActionButtonText, { color: tintButtonTextColor }]}
+                >
                   Change Role
                 </ThemedText>
               </Pressable>

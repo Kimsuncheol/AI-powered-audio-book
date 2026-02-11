@@ -20,6 +20,10 @@ export function PlaybackRateMenu({
   cardBgColor,
 }: PlaybackRateMenuProps) {
   if (!visible) return null;
+  const tintButtonTextColor =
+    colors.tint.toLowerCase() === "#fff" || colors.tint.toLowerCase() === "#ffffff"
+      ? "#000000"
+      : "#FFFFFF";
 
   return (
     <View style={[styles.menuContainer, { backgroundColor: cardBgColor }]}>
@@ -39,7 +43,7 @@ export function PlaybackRateMenu({
             <ThemedText
               style={[
                 styles.menuItemText,
-                currentRate === rate && styles.menuItemTextActive,
+                currentRate === rate && { color: tintButtonTextColor },
               ]}
             >
               {rate}x
@@ -77,8 +81,5 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 15,
     fontWeight: "600",
-  },
-  menuItemTextActive: {
-    color: "#FFFFFF",
   },
 });

@@ -37,6 +37,7 @@ export default function NotificationsScreen() {
 
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
   const cardBorderColor = colorScheme === "dark" ? "#2C2C2E" : "#E5E5EA";
+  const tintButtonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const handleSave = () => {
     Alert.alert("Success", "Notification preferences saved successfully");
@@ -307,7 +308,7 @@ export default function NotificationsScreen() {
             style={[styles.saveButton, { backgroundColor: colors.tint }]}
             onPress={handleSave}
           >
-            <ThemedText style={styles.saveButtonText}>
+            <ThemedText style={[styles.saveButtonText, { color: tintButtonTextColor }]}>
               Save Preferences
             </ThemedText>
           </Pressable>
@@ -420,7 +421,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   saveButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },

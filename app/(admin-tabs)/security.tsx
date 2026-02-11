@@ -33,6 +33,7 @@ export default function SecurityScreen() {
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
   const cardBorderColor = colorScheme === "dark" ? "#2C2C2E" : "#E5E5EA";
   const modalBgColor = colorScheme === "dark" ? "#1C1C1E" : "#FFFFFF";
+  const tintButtonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const handleChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -407,7 +408,7 @@ export default function SecurityScreen() {
                 style={[styles.modalButton, { backgroundColor: colors.tint }]}
                 onPress={handleChangePassword}
               >
-                <ThemedText style={{ color: "#FFFFFF" }}>
+                <ThemedText style={{ color: tintButtonTextColor }}>
                   Change Password
                 </ThemedText>
               </Pressable>

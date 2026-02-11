@@ -35,6 +35,7 @@ export default function PrivacySecurityScreen() {
   });
 
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
+  const tintButtonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const handleChangePassword = () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -387,7 +388,7 @@ export default function PrivacySecurityScreen() {
                 style={[styles.submitButton, { backgroundColor: colors.tint }]}
                 onPress={handleChangePassword}
               >
-                <ThemedText style={styles.submitButtonText}>
+                <ThemedText style={[styles.submitButtonText, { color: tintButtonTextColor }]}>
                   Change Password
                 </ThemedText>
               </Pressable>
@@ -540,7 +541,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },

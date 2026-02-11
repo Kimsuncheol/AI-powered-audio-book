@@ -45,6 +45,7 @@ export default function PlayerScreen() {
   const book = playbackState.currentBook;
   const currentChapter = book?.chapters[playbackState.currentChapterIndex];
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
+  const tintButtonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   // Handle preview limit reached
   useEffect(() => {
@@ -101,7 +102,9 @@ export default function PlayerScreen() {
               style={[styles.closeButton, { backgroundColor: colors.tint }]}
               onPress={() => router.back()}
             >
-              <ThemedText style={styles.closeButtonText}>Go Back</ThemedText>
+              <ThemedText style={[styles.closeButtonText, { color: tintButtonTextColor }]}>
+                Go Back
+              </ThemedText>
             </Pressable>
           </View>
         </SafeAreaView>
@@ -226,7 +229,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   closeButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },
