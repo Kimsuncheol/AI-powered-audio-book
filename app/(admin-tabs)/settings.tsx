@@ -25,7 +25,7 @@ export default function AdminSettingsScreen() {
         onPress: async () => {
           try {
             await signOut();
-            router.replace("/");
+            router.replace("/(auth)/login");
           } catch (error: any) {
             Alert.alert("Error", error.message || "Failed to sign out");
           }
@@ -38,7 +38,7 @@ export default function AdminSettingsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <View
@@ -65,9 +65,7 @@ export default function AdminSettingsScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => router.push("/(admin-tabs)/general-settings")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
@@ -84,9 +82,7 @@ export default function AdminSettingsScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => router.push("/(admin-tabs)/security")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
@@ -101,9 +97,7 @@ export default function AdminSettingsScreen() {
 
             <Pressable
               style={[styles.menuItem, { backgroundColor: cardBgColor }]}
-              onPress={() =>
-                Alert.alert("Coming Soon", "This feature is coming soon!")
-              }
+              onPress={() => router.push("/(admin-tabs)/notifications")}
             >
               <View style={styles.menuItemLeft}>
                 <IconSymbol
