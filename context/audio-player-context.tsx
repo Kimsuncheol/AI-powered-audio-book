@@ -1,4 +1,5 @@
 import { useAuth } from "@/context/auth-context";
+import { useSilentModeCheck } from "@/hooks/use-silent-mode-check";
 import { AudioBook } from "@/types/audiobook";
 import {
   AudioPlayerContextType,
@@ -47,6 +48,7 @@ export function AudioPlayerProvider({
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { isGuest } = useAuth();
+  const { checkAndAlert } = useSilentModeCheck();
 
   // Configure audio session
   useEffect(() => {
@@ -154,6 +156,9 @@ export function AudioPlayerProvider({
 
   const play = async () => {
     try {
+      // Check if device is in silent mode before playing
+      checkAndAlert();
+
       if (playerRef.current) {
         playerRef.current.play();
       }
