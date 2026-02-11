@@ -4,7 +4,7 @@ import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Image } from "expo-image";
-import { router } from "expo-router";
+import { router, usePathname, useSegments } from "expo-router";
 import {
   Dimensions,
   Pressable,
@@ -54,7 +54,16 @@ const AnimatedPressable = ({
       onPress={handlePress}
       {...props}
     >
-      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+      {(state) => (
+        <Animated.View
+          style={[
+            typeof style === "function" ? style(state) : style,
+            animatedStyle,
+          ]}
+        >
+          {children}
+        </Animated.View>
+      )}
     </Pressable>
   );
 };
@@ -75,6 +84,15 @@ export function MiniPlayer() {
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
 
+  // Determine nav height based on route
+  const segments = useSegments();
+  const pathname = usePathname();
+
+  // Check if we are in tabs
+  const isInTabs = segments[0] === "(tabs)";
+  // Determine bottom offset
+  const bottomOffset = isInTabs ? TAB_BAR_HEIGHT : 20; // 20px padding for non-tab screens
+
   // Pan gesture handler for dragging - MUST be defined before conditional returns
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -85,7 +103,8 @@ export function MiniPlayer() {
       // Snap to edges
       const maxX = (SCREEN_WIDTH - MINI_PLAYER_WIDTH) / 2;
       const minX = -(SCREEN_WIDTH - MINI_PLAYER_WIDTH) / 2;
-      const maxY = SCREEN_HEIGHT - TAB_BAR_HEIGHT - MINI_PLAYER_HEIGHT - 20;
+      // Adjust maxY based on bottomOffset
+      const maxY = SCREEN_HEIGHT - bottomOffset - MINI_PLAYER_HEIGHT - 20;
       const minY = -SCREEN_HEIGHT / 2 + 100;
 
       // Clamp values
@@ -105,13 +124,20 @@ export function MiniPlayer() {
     ],
   }));
 
+  // Update position when offset changes
+  // We need to ensure the player isn't stuck below the new bottom limit if we switch from tabs to stack
+  // This is a simple improvement: reset Y if we switch contexts?
+  // For now, let's just apply the bottom style dynamically.
+
   // Now check if book exists - after all hooks
   const book = playbackState.currentBook;
-  if (!book) return null;
+  if (!book || pathname === "/player") return null;
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.container, animatedStyle]}>
+      <Animated.View
+        style={[styles.container, { bottom: bottomOffset }, animatedStyle]}
+      >
         <View style={styles.wrapper}>
           {/* Close button - positioned outside card */}
           <CloseButton onPress={stopPlayback} />
@@ -235,7 +261,7 @@ function MiniPlayerInner() {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    bottom: TAB_BAR_HEIGHT,
+    // bottom is set dynamically via style prop
     left: 8,
     right: 8,
     zIndex: 1000,

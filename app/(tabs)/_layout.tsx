@@ -3,7 +3,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
-import { MiniPlayer } from "@/components/mini-player";
+
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
@@ -71,7 +71,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-      <MiniPlayer />
     </View>
   );
 }
