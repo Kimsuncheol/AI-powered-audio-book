@@ -24,6 +24,8 @@ export default function AuthorEditProfileScreen() {
   const colors = Colors[colorScheme ?? "light"];
   const { user, userProfile } = useAuth();
 
+  const buttonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
+
   const inputBgColor = colorScheme === "dark" ? "#2C2C2E" : "#F2F2F7";
   const inputTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
   const placeholderColor = colorScheme === "dark" ? "#8E8E93" : "#999";
@@ -114,7 +116,9 @@ export default function AuthorEditProfileScreen() {
               onPress={handleSave}
               disabled={saving}
             >
-              <ThemedText style={styles.saveButtonText}>
+              <ThemedText
+                style={[styles.saveButtonText, { color: buttonTextColor }]}
+              >
                 {saving ? "Saving..." : "Save Changes"}
               </ThemedText>
             </Pressable>
@@ -156,7 +160,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#FFFFFF",
   },
   bottomSpacer: {
     height: 40,

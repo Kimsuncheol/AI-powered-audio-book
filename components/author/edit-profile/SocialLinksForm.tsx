@@ -98,7 +98,6 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
     borderRadius: 12,
     gap: 10,
   },

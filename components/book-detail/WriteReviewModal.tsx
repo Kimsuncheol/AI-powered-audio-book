@@ -96,7 +96,19 @@ export function WriteReviewModal({
               style={[styles.submitButton, { backgroundColor: colors.tint }]}
               onPress={onSubmit}
             >
-              <ThemedText style={styles.submitButtonText}>
+              <ThemedText
+                style={[
+                  styles.submitButtonText,
+                  {
+                    color:
+                      colors.background === "#000000" ||
+                      colors.background === "#fff" ||
+                      colors.background === "#151718"
+                        ? cardBgColor
+                        : "#ffffff",
+                  },
+                ]}
+              >
                 Submit Review
               </ThemedText>
             </Pressable>
@@ -176,7 +188,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   submitButtonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
   },

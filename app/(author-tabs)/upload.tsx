@@ -33,6 +33,7 @@ export default function UploadScreen() {
   const colors = Colors[colorScheme ?? "light"];
   const inputBgColor = colorScheme === "dark" ? "#2C2C2E" : "#F2F2F7";
   const inputTextColor = colorScheme === "dark" ? "#FFFFFF" : "#000000";
+  const buttonTextColor = colorScheme === "dark" ? "#000000" : "#FFFFFF";
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -185,8 +186,9 @@ export default function UploadScreen() {
                     <ThemedText
                       style={[
                         styles.genreChipText,
-                        selectedGenres.includes(genre) &&
-                          styles.genreChipTextActive,
+                        selectedGenres.includes(genre) && {
+                          color: buttonTextColor,
+                        },
                       ]}
                     >
                       {genre}
@@ -221,7 +223,9 @@ export default function UploadScreen() {
               onPress={handleUpload}
               disabled={uploading}
             >
-              <ThemedText style={styles.submitButtonText}>
+              <ThemedText
+                style={[styles.submitButtonText, { color: buttonTextColor }]}
+              >
                 {uploading ? "Uploading..." : "Submit for Review"}
               </ThemedText>
             </Pressable>
@@ -316,7 +320,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   genreChipTextActive: {
-    color: "#FFFFFF",
+    // color handled inline
   },
   submitButton: {
     paddingVertical: 16,
@@ -327,7 +331,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#FFFFFF",
   },
   bottomSpacer: {
     height: 80,
