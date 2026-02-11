@@ -1,7 +1,52 @@
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, PressableProps, StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+
+const AnimatedPressable = ({
+  style,
+  onPress,
+  children,
+  ...props
+}: PressableProps & { children: React.ReactNode }) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  const handlePress = (e: any) => {
+    if (onPress) {
+      onPress(e);
+    }
+  };
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+      {...props}
+    >
+      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
+};
 
 interface PlaybackControlsProps {
   isPlaying: boolean;
@@ -50,7 +95,7 @@ export function PlaybackControls({
         <IconSymbol size={32} name="gobackward.15" color={colors.text} />
       </Pressable>
 
-      <Pressable
+      <AnimatedPressable
         style={[styles.playButton, { backgroundColor: colors.tint }]}
         onPress={onPlayPause}
       >
@@ -59,7 +104,7 @@ export function PlaybackControls({
           name={isPlaying ? "pause.fill" : "play.fill"}
           color={iconColor}
         />
-      </Pressable>
+      </AnimatedPressable>
 
       <Pressable style={styles.controlButton} onPress={onSkipForward}>
         <IconSymbol size={32} name="goforward.15" color={colors.text} />

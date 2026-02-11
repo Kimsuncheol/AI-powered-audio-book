@@ -5,13 +5,59 @@ import { useAudioPlayer } from "@/context/audio-player-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { Dimensions, Pressable, StyleSheet, View } from "react-native";
+import {
+  Dimensions,
+  Pressable,
+  PressableProps,
+  StyleSheet,
+  View,
+} from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+
+const AnimatedPressable = ({
+  style,
+  onPress,
+  children,
+  ...props
+}: PressableProps & { children: React.ReactNode }) => {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.9);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  const handlePress = (e: any) => {
+    if (onPress) {
+      onPress(e);
+    }
+  };
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      onPress={handlePress}
+      {...props}
+    >
+      <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>
+    </Pressable>
+  );
+};
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MINI_PLAYER_HEIGHT = 80;
@@ -156,9 +202,9 @@ function MiniPlayerInner() {
           </Pressable>
 
           {/* Play/Pause button */}
-          <Pressable
+          <AnimatedPressable
             style={[styles.playButton, { backgroundColor: playButtonBgColor }]}
-            onPress={(e) => {
+            onPress={(e: any) => {
               e.stopPropagation();
               togglePlayPause();
             }}
@@ -168,7 +214,7 @@ function MiniPlayerInner() {
               name={playbackState.isPlaying ? "pause.fill" : "play.fill"}
               color={colors.text}
             />
-          </Pressable>
+          </AnimatedPressable>
 
           {/* Next button */}
           <Pressable
