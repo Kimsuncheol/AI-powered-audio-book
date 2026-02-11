@@ -48,7 +48,8 @@ export function AudioPlayerProvider({
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { isGuest } = useAuth();
-  const { checkAndAlert } = useSilentModeCheck();
+  const { checkAndAlert, isSilent } = useSilentModeCheck();
+  const previousSilentStateRef = useRef<boolean>(false);
 
   // Configure audio session
   useEffect(() => {
@@ -78,6 +79,27 @@ export function AudioPlayerProvider({
       }
     };
   }, []);
+
+  // Monitor volume changes during playback
+  useEffect(() => {
+    // Only show alert if volume becomes 0 while playing
+    if (playbackState.isPlaying && isSilent && !previousSilentStateRef.current) {
+      // Volume just became 0 or device entered silent mode during playback
+      // Pause immediately to avoid playing with no audio
+      if (playerRef.current) {
+        playerRef.current.pause();
+      }
+
+      // Show alert and give option to continue
+      checkAndAlert(() => {
+        if (playerRef.current) {
+          playerRef.current.play();
+        }
+      });
+    }
+    // Update previous state
+    previousSilentStateRef.current = isSilent;
+  }, [isSilent, playbackState.isPlaying, checkAndAlert]);
 
   // Start polling for playback status updates
   const startStatusPolling = () => {
@@ -114,14 +136,74 @@ export function AudioPlayerProvider({
     }
   };
 
+  /**
+   * Safely stops and unloads any currently active audio
+   *
+   * This function performs the following checks and operations:
+   * 1. Checks if there's an active audio player
+   * 2. Stops status polling to prevent memory leaks
+   * 3. Pauses playback if audio is currently playing
+   * 4. Removes all event listeners
+   * 5. Unloads and removes the audio player
+   * 6. Clears player reference and resets state
+   *
+   * This ensures no audio is playing before starting a new track
+   * and prevents issues like:
+   * - Multiple audio tracks playing simultaneously
+   * - Memory leaks from unremoved listeners
+   * - Corrupted playback state
+   *
+   * @returns Promise that resolves when audio is safely stopped and unloaded
+   */
+  const stopAndUnloadCurrentAudio = async (): Promise<void> => {
+    try {
+      const player = playerRef.current;
+
+      // Check if there's an active audio player
+      if (!player) {
+        return; // No audio to stop
+      }
+
+      console.log("Stopping and unloading current audio...");
+
+      // Stop status polling first
+      stopStatusPolling();
+
+      // Check if audio is currently playing and stop it
+      if (player.playing) {
+        console.log("Audio is playing - pausing...");
+        player.pause();
+      }
+
+      // Remove all event listeners to prevent memory leaks
+      player.removeAllListeners();
+
+      // Unload and remove the player
+      player.remove();
+
+      // Clear the player reference
+      playerRef.current = null;
+
+      // Reset playback state (but keep book info for UI)
+      setPlaybackState((prev) => ({
+        ...prev,
+        isPlaying: false,
+        position: 0,
+      }));
+
+      console.log("Audio successfully stopped and unloaded");
+    } catch (error) {
+      console.error("Error stopping and unloading audio:", error);
+      // Force cleanup even if there's an error
+      playerRef.current = null;
+      stopStatusPolling();
+    }
+  };
+
   const loadBook = async (book: AudioBook, chapterIndex: number = 0) => {
     try {
-      // Remove previous player if exists
-      if (playerRef.current) {
-        stopStatusPolling();
-        playerRef.current.remove();
-        playerRef.current = null;
-      }
+      // Stop and unload any currently playing audio before loading new track
+      await stopAndUnloadCurrentAudio();
 
       // Get the audio URL for the chapter
       const audioUrl =
@@ -156,9 +238,6 @@ export function AudioPlayerProvider({
 
   const play = async () => {
     try {
-      // Check if device is in silent mode before playing
-      checkAndAlert();
-
       if (playerRef.current) {
         playerRef.current.play();
       }
@@ -181,7 +260,10 @@ export function AudioPlayerProvider({
     if (playbackState.isPlaying) {
       pause();
     } else {
-      play();
+      // Check silent mode before playing
+      checkAndAlert(() => {
+        play();
+      });
     }
   };
 
@@ -210,12 +292,9 @@ export function AudioPlayerProvider({
 
   const stopPlayback = async () => {
     try {
-      if (playerRef.current) {
-        playerRef.current.pause();
-        stopStatusPolling();
-        playerRef.current.remove();
-        playerRef.current = null;
-      }
+      // Use the safe stop and unload function
+      await stopAndUnloadCurrentAudio();
+      // Reset all playback state to initial values
       setPlaybackState(initialPlaybackState);
     } catch (error) {
       console.error("Error stopping playback:", error);
