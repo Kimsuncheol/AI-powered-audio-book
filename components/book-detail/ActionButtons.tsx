@@ -27,7 +27,7 @@ export function ActionButtons({
     <View style={styles.actionButtons}>
       <Pressable
         style={[styles.playButton, { backgroundColor: colors.tint }]}
-        onPress={onPlay}
+        onPress={() => onPlay()}
       >
         <IconSymbol size={24} name="play.fill" color={textColor} />
         <ThemedText style={[styles.playButtonText, { color: textColor }]}>

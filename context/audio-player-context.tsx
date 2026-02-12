@@ -83,7 +83,11 @@ export function AudioPlayerProvider({
   // Monitor volume changes during playback
   useEffect(() => {
     // Only show alert if volume becomes 0 while playing
-    if (playbackState.isPlaying && isSilent && !previousSilentStateRef.current) {
+    if (
+      playbackState.isPlaying &&
+      isSilent &&
+      !previousSilentStateRef.current
+    ) {
       // Volume just became 0 or device entered silent mode during playback
       // Pause immediately to avoid playing with no audio
       if (playerRef.current) {
@@ -206,8 +210,14 @@ export function AudioPlayerProvider({
       await stopAndUnloadCurrentAudio();
 
       // Get the audio URL for the chapter
+      const chapter = book.chapters[chapterIndex];
+      if (!chapter) {
+        console.error(`Invalid chapter index: ${chapterIndex}`);
+        return;
+      }
+
       const audioUrl =
-        book.chapters[chapterIndex].audioUrl ||
+        chapter.audioUrl ||
         "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
 
       // Create new audio player

@@ -98,7 +98,8 @@ export function ContextPlayerScreen({
     setIsPreparingBook(true);
     setLoadError(null);
 
-    loadBookRef.current(requestedBook, initialChapterIndex)
+    loadBookRef
+      .current(requestedBook, initialChapterIndex)
       .catch((error) => {
         console.warn("Failed to load audiobook:", error);
         if (isActive) {
@@ -223,7 +224,9 @@ export function ContextPlayerScreen({
         <SafeAreaView style={styles.container}>
           <View style={styles.emptyContainer}>
             <ActivityIndicator size="large" color={colors.tint} />
-            <ThemedText style={styles.emptyText}>Loading audiobook...</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              Loading audiobook...
+            </ThemedText>
           </View>
         </SafeAreaView>
       </ThemedView>
@@ -235,7 +238,9 @@ export function ContextPlayerScreen({
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.container}>
           <View style={styles.emptyContainer}>
-            <ThemedText style={styles.emptyText}>No audiobook playing</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              No audiobook playing
+            </ThemedText>
             <Pressable
               style={[styles.closeButton, { backgroundColor: colors.tint }]}
               onPress={() => router.back()}
