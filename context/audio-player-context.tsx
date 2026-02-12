@@ -47,6 +47,8 @@ export function AudioPlayerProvider({
   const playerRef = useRef<AudioPlayer | null>(null);
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const statusIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const playbackStatusSubscriptionRef =
+    useRef<ReturnType<AudioPlayer["addListener"]> | null>(null);
   const { isGuest } = useAuth();
   const { checkAndAlert, isSilent } = useSilentModeCheck();
   const previousSilentStateRef = useRef<boolean>(false);
@@ -68,6 +70,10 @@ export function AudioPlayerProvider({
 
     return () => {
       // Cleanup
+      if (playbackStatusSubscriptionRef.current) {
+        playbackStatusSubscriptionRef.current.remove();
+        playbackStatusSubscriptionRef.current = null;
+      }
       if (playerRef.current) {
         playerRef.current.remove();
       }
@@ -140,6 +146,13 @@ export function AudioPlayerProvider({
     }
   };
 
+  const clearPlaybackStatusSubscription = () => {
+    if (playbackStatusSubscriptionRef.current) {
+      playbackStatusSubscriptionRef.current.remove();
+      playbackStatusSubscriptionRef.current = null;
+    }
+  };
+
   /**
    * Safely stops and unloads any currently active audio
    *
@@ -147,7 +160,7 @@ export function AudioPlayerProvider({
    * 1. Checks if there's an active audio player
    * 2. Stops status polling to prevent memory leaks
    * 3. Pauses playback if audio is currently playing
-   * 4. Removes all event listeners
+   * 4. Removes tracked playback status listener
    * 5. Unloads and removes the audio player
    * 6. Clears player reference and resets state
    *
@@ -161,6 +174,9 @@ export function AudioPlayerProvider({
    */
   const stopAndUnloadCurrentAudio = async (): Promise<void> => {
     try {
+      // Remove any tracked playback listener before tearing down player
+      clearPlaybackStatusSubscription();
+
       const player = playerRef.current;
 
       // Check if there's an active audio player
@@ -179,9 +195,6 @@ export function AudioPlayerProvider({
         player.pause();
       }
 
-      // Remove all event listeners to prevent memory leaks
-      player.removeAllListeners();
-
       // Unload and remove the player
       player.remove();
 
@@ -199,6 +212,7 @@ export function AudioPlayerProvider({
     } catch (error) {
       console.error("Error stopping and unloading audio:", error);
       // Force cleanup even if there's an error
+      clearPlaybackStatusSubscription();
       playerRef.current = null;
       stopStatusPolling();
     }
@@ -225,11 +239,15 @@ export function AudioPlayerProvider({
       playerRef.current = player;
 
       // Listen for playback status updates to detect end of track
-      player.addListener("playbackStatusUpdate", (status) => {
-        if (status.didJustFinish) {
-          nextChapter();
-        }
-      });
+      clearPlaybackStatusSubscription();
+      playbackStatusSubscriptionRef.current = player.addListener(
+        "playbackStatusUpdate",
+        (status) => {
+          if (status.didJustFinish) {
+            nextChapter();
+          }
+        },
+      );
 
       setPlaybackState((prev) => ({
         ...prev,
