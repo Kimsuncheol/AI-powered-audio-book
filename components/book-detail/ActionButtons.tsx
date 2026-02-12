@@ -12,6 +12,7 @@ interface ActionButtonsProps {
     text: string;
   };
   cardBgColor: string;
+  isActive?: boolean;
 }
 
 export function ActionButtons({
@@ -19,6 +20,7 @@ export function ActionButtons({
   onDownload,
   colors,
   cardBgColor,
+  isActive,
 }: ActionButtonsProps) {
   const theme = useColorScheme();
   const textColor = theme === "dark" ? "#000000" : "#FFFFFF";
@@ -27,11 +29,15 @@ export function ActionButtons({
     <View style={styles.actionButtons}>
       <Pressable
         style={[styles.playButton, { backgroundColor: colors.tint }]}
-        onPress={() => onPlay()}
+        onPress={() => !isActive && onPlay()}
       >
-        <IconSymbol size={24} name="play.fill" color={textColor} />
+        <IconSymbol
+          size={24}
+          name={isActive ? "waveform" : "play.fill"}
+          color={textColor}
+        />
         <ThemedText style={[styles.playButtonText, { color: textColor }]}>
-          Play Now
+          {isActive ? "Playing" : "Play Now"}
         </ThemedText>
       </Pressable>
       <Pressable

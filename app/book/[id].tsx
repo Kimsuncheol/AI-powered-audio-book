@@ -31,7 +31,7 @@ export default function BookDetailScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { isGuest } = useAuth();
-  const { loadBook } = useAudioPlayer();
+  const { loadBook, playbackState } = useAudioPlayer();
   const { isFavorite: checkFavorite, toggleFavorite } = useFavorites();
   const { getReviewsForBook, getAverageRating, addReview, hasUserReviewed } =
     useReviews();
@@ -192,6 +192,7 @@ export default function BookDetailScreen() {
             onDownload={handleDownload}
             colors={colors}
             cardBgColor={cardBgColor}
+            isActive={playbackState.currentBook?.id === book.id}
           />
 
           <BookDescription description={book.description} />
