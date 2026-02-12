@@ -29,7 +29,7 @@ export function ActionButtons({
     <View style={styles.actionButtons}>
       <Pressable
         style={[styles.playButton, { backgroundColor: colors.tint }]}
-        onPress={() => !isActive && onPlay()}
+        onPress={onPlay}
       >
         <IconSymbol
           size={24}

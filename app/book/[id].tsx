@@ -93,6 +93,20 @@ export default function BookDetailScreen() {
     }
   };
 
+  const handlePlayButtonPress = () => {
+    if (!book) return;
+
+    if (playbackState.currentBook?.id === book.id) {
+      router.push({
+        pathname: "/player/[id]",
+        params: { id: book.id },
+      });
+      return;
+    }
+
+    handlePlay();
+  };
+
   const handleDownload = () => {
     if (isGuest) {
       setSignUpFeature("download");
@@ -188,7 +202,7 @@ export default function BookDetailScreen() {
           </View>
 
           <ActionButtons
-            onPlay={handlePlay}
+            onPlay={handlePlayButtonPress}
             onDownload={handleDownload}
             colors={colors}
             cardBgColor={cardBgColor}
