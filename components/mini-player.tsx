@@ -131,7 +131,7 @@ export function MiniPlayer() {
 
   // Now check if book exists - after all hooks
   const book = playbackState.currentBook;
-  if (!book || pathname === "/player") return null;
+  if (!book || pathname.startsWith("/player")) return null;
 
   return (
     <GestureDetector gesture={panGesture}>
@@ -187,7 +187,12 @@ function MiniPlayerInner() {
   return (
     <Pressable
       style={[styles.playerCard, { backgroundColor: cardBgColor }]}
-      onPress={() => router.push("/player")}
+      onPress={() =>
+        router.push({
+          pathname: "/player/[id]",
+          params: { id: book.id },
+        })
+      }
     >
       {/* Progress bar */}
       <View style={styles.progressBar}>

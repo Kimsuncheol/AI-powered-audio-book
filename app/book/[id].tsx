@@ -77,15 +77,19 @@ export default function BookDetailScreen() {
   const cardBgColor = colorScheme === "dark" ? "#1C1C1E" : "#F2F2F7";
 
   // Handlers
-  const handlePlay = async () => {
-    if (book) {
-      try {
-        await loadBook(book, currentChapter);
-      } catch (error) {
-        console.warn("Failed to load audiobook:", error);
-      } finally {
-        router.push("/player");
-      }
+  const handlePlay = async (chapterIndex: number = currentChapter) => {
+    if (!book) return;
+
+    try {
+      await loadBook(book, chapterIndex);
+      setCurrentChapter(chapterIndex);
+    } catch (error) {
+      console.warn("Failed to load audiobook:", error);
+    } finally {
+      router.push({
+        pathname: "/player/[id]",
+        params: { id: book.id },
+      });
     }
   };
 
@@ -135,8 +139,7 @@ export default function BookDetailScreen() {
   };
 
   const handleChapterPress = (index: number) => {
-    setCurrentChapter(index);
-    handlePlay();
+    handlePlay(index);
   };
 
   const formatTimeAgo = (dateStr: string) => {

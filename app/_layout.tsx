@@ -60,6 +60,10 @@ function RootLayoutNav() {
           options={{ headerShown: false, presentation: "fullScreenModal" }}
         />
         <Stack.Screen
+          name="player/[id]"
+          options={{ headerShown: false, presentation: "fullScreenModal" }}
+        />
+        <Stack.Screen
           name="modal"
           options={{ presentation: "modal", title: "Modal" }}
         />
