@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { formatTime } from "@/data/mock-audiobooks";
+import { formatTime } from "@/utils/time";
 import Slider from "@react-native-community/slider";
 import { StyleSheet, View } from "react-native";
 

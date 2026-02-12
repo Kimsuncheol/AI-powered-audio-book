@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { formatDuration } from "@/data/mock-audiobooks";
 import { AudioBook } from "@/types/audiobook";
+import { formatDuration } from "@/utils/time";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Dimensions, Pressable, StyleSheet, View } from "react-native";

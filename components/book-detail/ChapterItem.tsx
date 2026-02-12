@@ -1,5 +1,5 @@
 import { ThemedText } from "@/components/themed-text";
-import { formatDuration } from "@/data/mock-audiobooks";
+import { formatDuration } from "@/utils/time";
 import { Pressable, StyleSheet, View } from "react-native";
 
 interface ChapterItemProps {

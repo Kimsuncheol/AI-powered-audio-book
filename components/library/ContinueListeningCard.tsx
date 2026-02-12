@@ -1,6 +1,7 @@
+import { ProgressBar } from "@/components/shared/ProgressBar";
 import { ThemedText } from "@/components/themed-text";
-import { getProgressPercentage } from "@/data/mock-audiobooks";
 import { AudioBook } from "@/types/audiobook";
+import { getProgressPercentage } from "@/utils/time";
 import { Image } from "expo-image";
 import { Link } from "expo-router";
 import { Dimensions, Pressable, StyleSheet, View } from "react-native";
@@ -42,17 +43,15 @@ export function ContinueListeningCard({
           <ThemedText style={styles.continueChapter} numberOfLines={1}>
             Chapter {progress.currentChapter + 1}
           </ThemedText>
-          <View style={styles.progressBarContainer}>
-            <View
-              style={[
-                styles.progressBarFill,
-                {
-                  width: `${getProgressPercentage(progress.currentPosition, book.duration)}%`,
-                  backgroundColor: colors.tint,
-                },
-              ]}
-            />
-          </View>
+          <ProgressBar
+            progress={getProgressPercentage(
+              progress.currentPosition,
+              book.duration,
+            )}
+            color={colors.tint}
+            height={4}
+            style={styles.progressBar}
+          />
         </View>
       </Pressable>
     </Link>
@@ -85,15 +84,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
     opacity: 0.6,
   },
-  progressBarContainer: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(128,128,128,0.2)",
+  progressBar: {
     marginTop: 6,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
     borderRadius: 2,
   },
 });

@@ -1,8 +1,10 @@
+import { ProgressBar } from "@/components/shared/ProgressBar";
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { formatTime } from "@/utils/time";
 import { Image } from "expo-image";
 import { router, usePathname, useSegments } from "expo-router";
 import {
@@ -69,14 +71,12 @@ const AnimatedPressable = ({
 };
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const MINI_PLAYER_HEIGHT = 80;
+const MINI_PLAYER_HEIGHT = 120;
 const MINI_PLAYER_WIDTH = SCREEN_WIDTH - 16;
 const TAB_BAR_HEIGHT = 80;
 
 export function MiniPlayer() {
   const { playbackState, stopPlayback } = useAudioPlayer();
-  // const colorScheme = useColorScheme(); // Not used in MiniPlayer anymore
-  // const colors = Colors[colorScheme ?? "light"]; // Not used in MiniPlayer anymore
 
   // Shared values for dragging - MUST be called before any conditional returns
   const translateX = useSharedValue(0);
@@ -194,16 +194,6 @@ function MiniPlayerInner() {
         })
       }
     >
-      {/* Progress bar */}
-      <View style={styles.progressBar}>
-        <View
-          style={[
-            styles.progressFill,
-            { width: `${progress}%`, backgroundColor: colors.tint },
-          ]}
-        />
-      </View>
-
       <View style={styles.content}>
         <Image
           source={{ uri: book.coverImage }}
@@ -259,6 +249,19 @@ function MiniPlayerInner() {
           </Pressable>
         </View>
       </View>
+
+      {/* Progress bar */}
+      <ProgressBar progress={progress} color={colors.tint} />
+
+      {/* Time display */}
+      <View style={styles.timeContainer}>
+        <ThemedText style={styles.timeText}>
+          {formatTime(playbackState.position)}
+        </ThemedText>
+        <ThemedText style={styles.timeText}>
+          {formatTime(playbackState.duration)}
+        </ThemedText>
+      </View>
     </Pressable>
   );
 }
@@ -282,13 +285,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
-  },
-  progressBar: {
-    height: 3,
-    backgroundColor: "rgba(128, 128, 128, 0.2)",
-  },
-  progressFill: {
-    height: "100%",
   },
   content: {
     flexDirection: "row",
@@ -342,5 +338,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     zIndex: 10,
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    paddingTop: 4,
+  },
+  timeText: {
+    fontSize: 10,
+    opacity: 0.6,
   },
 });

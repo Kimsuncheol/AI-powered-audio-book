@@ -1,6 +1,6 @@
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { formatDuration } from "@/data/mock-audiobooks";
+import { formatDuration } from "@/utils/time";
 import { StyleSheet, View } from "react-native";
 
 interface BookMetadataProps {
