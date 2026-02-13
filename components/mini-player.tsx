@@ -3,10 +3,12 @@ import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
+import { usePlayerMode } from "@/context/player-mode-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
 import { Image } from "expo-image";
 import { router, usePathname, useSegments } from "expo-router";
+import { useCallback } from "react";
 import {
   Dimensions,
   Pressable,
@@ -77,6 +79,7 @@ const TAB_BAR_HEIGHT = 80;
 
 export function MiniPlayer() {
   const { playbackState, stopPlayback } = useAudioPlayer();
+  const { setPlayerMode } = usePlayerMode();
 
   // Shared values for dragging - MUST be called before any conditional returns
   const translateX = useSharedValue(0);
@@ -92,6 +95,10 @@ export function MiniPlayer() {
   const isInTabs = segments[0] === "(tabs)";
   // Determine bottom offset
   const bottomOffset = isInTabs ? TAB_BAR_HEIGHT : 20; // 20px padding for non-tab screens
+
+  const switchToCircular = useCallback(() => {
+    setPlayerMode("circular");
+  }, [setPlayerMode]);
 
   // Pan gesture handler for dragging - MUST be defined before conditional returns
   const panGesture = Gesture.Pan()
@@ -117,6 +124,16 @@ export function MiniPlayer() {
       offsetY.value = finalY;
     });
 
+  // 2-second long press → switch to circular mini-player
+  const longPressGesture = Gesture.LongPress()
+    .minDuration(2000)
+    .onStart(() => {
+      switchToCircular();
+    });
+
+  // Race: dragging cancels the long press; holding 2 s cancels dragging
+  const combinedGesture = Gesture.Race(longPressGesture, panGesture);
+
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: translateX.value },
@@ -124,17 +141,12 @@ export function MiniPlayer() {
     ],
   }));
 
-  // Update position when offset changes
-  // We need to ensure the player isn't stuck below the new bottom limit if we switch from tabs to stack
-  // This is a simple improvement: reset Y if we switch contexts?
-  // For now, let's just apply the bottom style dynamically.
-
   // Now check if book exists - after all hooks
   const book = playbackState.currentBook;
   if (!book || pathname.startsWith("/player")) return null;
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={combinedGesture}>
       <Animated.View
         style={[styles.container, { bottom: bottomOffset }, animatedStyle]}
       >

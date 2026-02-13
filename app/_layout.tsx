@@ -9,10 +9,12 @@ import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 
+import { CircularMiniPlayer } from "@/components/circular-mini-player";
 import { MiniPlayer } from "@/components/mini-player";
 import { AudioPlayerProvider } from "@/context/audio-player-context";
 import { AuthProvider, useAuth } from "@/context/auth-context";
 import { FavoritesProvider } from "@/context/favorites-context";
+import { PlayerModeProvider, usePlayerMode } from "@/context/player-mode-context";
 import { ProgressProvider } from "@/context/progress-context";
 import { ReviewsProvider } from "@/context/reviews-context";
 import { SettingsProvider } from "@/context/settings-context";
@@ -25,6 +27,7 @@ export const unstable_settings = {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { user, loading, isGuest } = useAuth();
+  const { playerMode } = usePlayerMode();
   const segments = useSegments();
   const router = useRouter();
 
@@ -68,7 +71,7 @@ function RootLayoutNav() {
           options={{ presentation: "modal", title: "Modal" }}
         />
       </Stack>
-      <MiniPlayer />
+      {playerMode === "bar" ? <MiniPlayer /> : <CircularMiniPlayer />}
       <StatusBar style="auto" />
     </ThemeProvider>
   );
@@ -83,7 +86,9 @@ export default function RootLayout() {
             <ProgressProvider>
               <ReviewsProvider>
                 <AudioPlayerProvider>
-                  <RootLayoutNav />
+                  <PlayerModeProvider>
+                    <RootLayoutNav />
+                  </PlayerModeProvider>
                 </AudioPlayerProvider>
               </ReviewsProvider>
             </ProgressProvider>
