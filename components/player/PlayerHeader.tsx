@@ -11,6 +11,7 @@ interface PlayerHeaderProps {
     text: string;
     tint: string;
   };
+  buttonBackgroundColor?: string; // Add prop for button background
 }
 
 export function PlayerHeader({
@@ -19,11 +20,19 @@ export function PlayerHeader({
   onCarModePress,
   showCarMode = false,
   colors,
+  buttonBackgroundColor = "transparent", // Default to transparent
 }: PlayerHeaderProps) {
   return (
     <View style={styles.header}>
-      <Pressable style={styles.headerButton} onPress={onBack}>
-        <IconSymbol size={24} name="chevron.down" color={colors.text} />
+      <Pressable
+        style={[
+          styles.headerButton,
+          { backgroundColor: buttonBackgroundColor },
+        ]}
+        onPress={onBack}
+        hitSlop={12} // Increase hit area
+      >
+        <IconSymbol size={28} name="chevron.left" color={colors.text} />
       </Pressable>
       <View style={styles.headerCenter}>
         <ThemedText style={styles.headerTitle}>Now Playing</ThemedText>
@@ -56,6 +65,7 @@ const styles = StyleSheet.create({
     height: 44,
     justifyContent: "center",
     alignItems: "center",
+    borderRadius: 22, // Make it circular
   },
   headerCenter: {
     flex: 1,

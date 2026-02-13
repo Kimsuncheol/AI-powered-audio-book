@@ -267,6 +267,7 @@ export function ContextPlayerScreen({
             onCarModePress={() => router.push("/car-mode")}
             showCarMode={settings?.carMode?.enabled ?? false}
             colors={colors}
+            buttonBackgroundColor={cardBgColor}
           />
 
           <AlbumArtwork coverImage={book.coverImage} />
