@@ -1,4 +1,4 @@
-import { IconSymbol } from "@/components/ui/icon-symbol";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
@@ -7,10 +7,11 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
 import { Image } from "expo-image";
 import { usePathname, useSegments } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -24,8 +25,13 @@ const STROKE_WIDTH = 4;
 const IMAGE_INSET = STROKE_WIDTH + 2;
 const IMAGE_SIZE = CIRCLE_SIZE - IMAGE_INSET * 2;
 const TAB_BAR_HEIGHT = 80;
-const DELETE_ZONE_HEIGHT = 80;
 const INITIAL_RIGHT = 20;
+
+const DELETE_ZONE_SIZE = 76;
+const DELETE_ZONE_RIGHT_MARGIN = 18;
+const DELETE_ZONE_BOTTOM_MARGIN_TABS = TAB_BAR_HEIGHT + 14;
+const DELETE_ZONE_BOTTOM_MARGIN_STACK = 24;
+const DELETE_HIT_RADIUS = (CIRCLE_SIZE + DELETE_ZONE_SIZE) * 0.38;
 
 // Progress ring using the two-half-circle clip technique (no SVG needed).
 // The full ring is split into left and right halves, each clipped by an
@@ -124,9 +130,15 @@ export function CircularMiniPlayer() {
   const colors = Colors[colorScheme ?? "light"];
   const segments = useSegments();
   const pathname = usePathname();
+  const [isOverDeleteZoneState, setIsOverDeleteZoneState] = useState(false);
+  const isMountedRef = useRef(true);
 
   const isInTabs = segments[0] === "(tabs)";
   const bottomOffset = isInTabs ? TAB_BAR_HEIGHT + 20 : 40;
+  const deleteZoneRight = DELETE_ZONE_RIGHT_MARGIN;
+  const deleteZoneBottom = isInTabs
+    ? DELETE_ZONE_BOTTOM_MARGIN_TABS
+    : DELETE_ZONE_BOTTOM_MARGIN_STACK;
 
   // Initial absolute center (used for delete-zone hit test)
   const initialCenterX = SCREEN_WIDTH - INITIAL_RIGHT - CIRCLE_SIZE / 2;
@@ -138,38 +150,73 @@ export function CircularMiniPlayer() {
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
   const isDragging = useSharedValue(0); // 0 = idle, 1 = dragging
+  const isOverDeleteZone = useSharedValue(0);
   const scale = useSharedValue(1);
 
-  const switchToBar = useCallback(() => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const setDeleteZoneActiveSafe = useCallback((active: boolean) => {
+    if (!isMountedRef.current) return;
+    setIsOverDeleteZoneState(active);
+  }, []);
+
+  const handleSwitchToBar = useCallback(() => {
     setPlayerMode("bar");
   }, [setPlayerMode]);
 
-  const dismiss = useCallback(() => {
+  const handleDismiss = useCallback(() => {
     setPlayerMode("bar");
-    stopPlayback();
+    void stopPlayback();
   }, [setPlayerMode, stopPlayback]);
 
   // Pan gesture — drag, snap to bounds, or drop into delete zone
   const panGesture = Gesture.Pan()
     .onBegin(() => {
       isDragging.value = 1;
+      isOverDeleteZone.value = 0;
       scale.value = withSpring(1.12);
+      runOnJS(setDeleteZoneActiveSafe)(false);
     })
     .onUpdate((event) => {
       translateX.value = offsetX.value + event.translationX;
       translateY.value = offsetY.value + event.translationY;
+
+      const absCenterX = initialCenterX + translateX.value;
+      const absCenterY = initialCenterY + translateY.value;
+      const zoneCenterX = SCREEN_WIDTH - deleteZoneRight - DELETE_ZONE_SIZE / 2;
+      const zoneCenterY = SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
+
+      const dx = absCenterX - zoneCenterX;
+      const dy = absCenterY - zoneCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const insideDeleteZone = distance <= DELETE_HIT_RADIUS;
+      const nextOverDelete = insideDeleteZone ? 1 : 0;
+
+      if (isOverDeleteZone.value !== nextOverDelete) {
+        isOverDeleteZone.value = nextOverDelete;
+        runOnJS(setDeleteZoneActiveSafe)(insideDeleteZone);
+      }
     })
     .onEnd(() => {
+      const absCenterX = initialCenterX + translateX.value;
       const absCenterY = initialCenterY + translateY.value;
+      const zoneCenterX = SCREEN_WIDTH - deleteZoneRight - DELETE_ZONE_SIZE / 2;
+      const zoneCenterY = SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
+      const dx = absCenterX - zoneCenterX;
+      const dy = absCenterY - zoneCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
 
-      // Delete zone: bottom DELETE_ZONE_HEIGHT px of screen
-      if (absCenterY > SCREEN_HEIGHT - DELETE_ZONE_HEIGHT) {
-        dismiss();
+      if (distance <= DELETE_HIT_RADIUS) {
+        runOnJS(handleDismiss)();
         return;
       }
 
       // Clamp to screen bounds with padding
-      const absCenterX = initialCenterX + translateX.value;
       const pad = CIRCLE_SIZE / 2 + 8;
       const clampedX = Math.max(pad, Math.min(SCREEN_WIDTH - pad, absCenterX));
       const clampedY = Math.max(pad + 40, Math.min(SCREEN_HEIGHT - pad, absCenterY));
@@ -184,19 +231,21 @@ export function CircularMiniPlayer() {
     })
     .onFinalize(() => {
       isDragging.value = 0;
+      isOverDeleteZone.value = 0;
       scale.value = withSpring(1);
+      runOnJS(setDeleteZoneActiveSafe)(false);
     });
 
   // Single tap — immediately switch to bar mini-player
   const tapGesture = Gesture.Tap().onEnd(() => {
-    switchToBar();
+    runOnJS(handleSwitchToBar)();
   });
 
   // Long press (2 s) — also switches to bar (kept for accessibility)
   const longPressGesture = Gesture.LongPress()
     .minDuration(2000)
     .onStart(() => {
-      switchToBar();
+      runOnJS(handleSwitchToBar)();
     });
 
   // Race: tap on quick touch, longPress on hold, pan on movement
@@ -212,6 +261,13 @@ export function CircularMiniPlayer() {
 
   const deleteZoneStyle = useAnimatedStyle(() => ({
     opacity: withTiming(isDragging.value, { duration: 200 }),
+    transform: [{ scale: withSpring(isOverDeleteZone.value ? 1.08 : 1) }],
+    backgroundColor: isOverDeleteZone.value
+      ? "#FF3B30"
+      : "rgba(255, 59, 48, 0.12)",
+    borderColor: isOverDeleteZone.value
+      ? "#FF3B30"
+      : "rgba(255, 59, 48, 0.45)",
   }));
 
   // Conditional render after all hooks
@@ -230,10 +286,17 @@ export function CircularMiniPlayer() {
       {/* Floating delete zone — fades in while dragging */}
       <Animated.View
         pointerEvents="none"
-        style={[styles.deleteZone, deleteZoneStyle]}
+        style={[
+          styles.deleteZone,
+          { right: deleteZoneRight, bottom: deleteZoneBottom },
+          deleteZoneStyle,
+        ]}
       >
-        <IconSymbol size={28} name="trash" color="#FF3B30" />
-        <ThemedText style={styles.deleteZoneLabel}>Release to remove</ThemedText>
+        <MaterialIcons
+          size={28}
+          name={isOverDeleteZoneState ? "delete" : "delete-outline"}
+          color={isOverDeleteZoneState ? "#FFFFFF" : "#FF3B30"}
+        />
       </Animated.View>
 
       {/* Circular player */}
@@ -308,23 +371,14 @@ const styles = StyleSheet.create({
   },
   deleteZone: {
     position: "absolute",
-    bottom: 0,
-    left: 20,
-    right: 20,
-    height: DELETE_ZONE_HEIGHT,
+    width: DELETE_ZONE_SIZE,
+    height: DELETE_ZONE_SIZE,
+    borderRadius: DELETE_ZONE_SIZE / 2,
     backgroundColor: "rgba(255, 59, 48, 0.12)",
-    borderRadius: 20,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: "rgba(255, 59, 48, 0.45)",
-    borderStyle: "dashed",
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-    zIndex: 999,
-  },
-  deleteZoneLabel: {
-    fontSize: 11,
-    color: "#FF3B30",
-    fontWeight: "600",
+    zIndex: 1100,
   },
 });
