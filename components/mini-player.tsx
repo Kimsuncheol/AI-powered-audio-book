@@ -1,3 +1,4 @@
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -8,7 +9,7 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
 import { Image } from "expo-image";
 import { router, usePathname, useSegments } from "expo-router";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   Pressable,
@@ -18,9 +19,11 @@ import {
 } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
+  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 const AnimatedPressable = ({
@@ -76,16 +79,25 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const MINI_PLAYER_HEIGHT = 120;
 const MINI_PLAYER_WIDTH = SCREEN_WIDTH - 16;
 const TAB_BAR_HEIGHT = 80;
+const DELETE_ZONE_HEIGHT = 64;
+const DELETE_ZONE_SIDE_MARGIN = 16;
+const DELETE_ZONE_BOTTOM_MARGIN_TABS = TAB_BAR_HEIGHT + 14;
+const DELETE_ZONE_BOTTOM_MARGIN_STACK = 24;
+const DELETE_ZONE_HIT_PADDING = 16;
 
 export function MiniPlayer() {
   const { playbackState, stopPlayback } = useAudioPlayer();
   const { setPlayerMode } = usePlayerMode();
+  const [isOverDeleteZoneState, setIsOverDeleteZoneState] = useState(false);
+  const isMountedRef = useRef(true);
 
   // Shared values for dragging - MUST be called before any conditional returns
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
+  const isDragging = useSharedValue(0);
+  const isOverDeleteZone = useSharedValue(0);
 
   // Determine nav height based on route
   const segments = useSegments();
@@ -95,18 +107,87 @@ export function MiniPlayer() {
   const isInTabs = segments[0] === "(tabs)";
   // Determine bottom offset
   const bottomOffset = isInTabs ? TAB_BAR_HEIGHT : 20; // 20px padding for non-tab screens
+  const deleteZoneBottom = isInTabs
+    ? DELETE_ZONE_BOTTOM_MARGIN_TABS
+    : DELETE_ZONE_BOTTOM_MARGIN_STACK;
+  const initialCenterX = SCREEN_WIDTH / 2;
+  const initialCenterY = SCREEN_HEIGHT - bottomOffset - MINI_PLAYER_HEIGHT / 2;
 
-  const switchToCircular = useCallback(() => {
-    setPlayerMode("circular");
-  }, [setPlayerMode]);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const setDeleteZoneActiveSafe = useCallback((active: boolean) => {
+    if (!isMountedRef.current) return;
+    setIsOverDeleteZoneState(active);
+  }, []);
+
+  const handleDismiss = useCallback(() => {
+    void stopPlayback();
+  }, [stopPlayback]);
 
   // Pan gesture handler for dragging - MUST be defined before conditional returns
   const panGesture = Gesture.Pan()
+    .onBegin(() => {
+      isDragging.value = 1;
+      isOverDeleteZone.value = 0;
+      runOnJS(setDeleteZoneActiveSafe)(false);
+    })
     .onUpdate((event) => {
       translateX.value = offsetX.value + event.translationX;
       translateY.value = offsetY.value + event.translationY;
+
+      const absCenterX = initialCenterX + translateX.value;
+      const absCenterY = initialCenterY + translateY.value;
+      const zoneLeft = DELETE_ZONE_SIDE_MARGIN - DELETE_ZONE_HIT_PADDING;
+      const zoneRight =
+        SCREEN_WIDTH - DELETE_ZONE_SIDE_MARGIN + DELETE_ZONE_HIT_PADDING;
+      const zoneTop =
+        SCREEN_HEIGHT -
+        deleteZoneBottom -
+        DELETE_ZONE_HEIGHT -
+        DELETE_ZONE_HIT_PADDING;
+      const zoneBottom =
+        SCREEN_HEIGHT - deleteZoneBottom + DELETE_ZONE_HIT_PADDING;
+      const insideDeleteZone =
+        absCenterX >= zoneLeft &&
+        absCenterX <= zoneRight &&
+        absCenterY >= zoneTop &&
+        absCenterY <= zoneBottom;
+      const nextOverDelete = insideDeleteZone ? 1 : 0;
+
+      if (isOverDeleteZone.value !== nextOverDelete) {
+        isOverDeleteZone.value = nextOverDelete;
+        runOnJS(setDeleteZoneActiveSafe)(insideDeleteZone);
+      }
     })
     .onEnd(() => {
+      const absCenterX = initialCenterX + translateX.value;
+      const absCenterY = initialCenterY + translateY.value;
+      const zoneLeft = DELETE_ZONE_SIDE_MARGIN - DELETE_ZONE_HIT_PADDING;
+      const zoneRight =
+        SCREEN_WIDTH - DELETE_ZONE_SIDE_MARGIN + DELETE_ZONE_HIT_PADDING;
+      const zoneTop =
+        SCREEN_HEIGHT -
+        deleteZoneBottom -
+        DELETE_ZONE_HEIGHT -
+        DELETE_ZONE_HIT_PADDING;
+      const zoneBottom =
+        SCREEN_HEIGHT - deleteZoneBottom + DELETE_ZONE_HIT_PADDING;
+      const insideDeleteZone =
+        absCenterX >= zoneLeft &&
+        absCenterX <= zoneRight &&
+        absCenterY >= zoneTop &&
+        absCenterY <= zoneBottom;
+
+      if (insideDeleteZone) {
+        runOnJS(handleDismiss)();
+        return;
+      }
+
       // Snap to edges
       const maxX = (SCREEN_WIDTH - MINI_PLAYER_WIDTH) / 2;
       const minX = -(SCREEN_WIDTH - MINI_PLAYER_WIDTH) / 2;
@@ -122,17 +203,12 @@ export function MiniPlayer() {
       translateY.value = withSpring(finalY);
       offsetX.value = finalX;
       offsetY.value = finalY;
+    })
+    .onFinalize(() => {
+      isDragging.value = 0;
+      isOverDeleteZone.value = 0;
+      runOnJS(setDeleteZoneActiveSafe)(false);
     });
-
-  // 2-second long press → switch to circular mini-player
-  const longPressGesture = Gesture.LongPress()
-    .minDuration(2000)
-    .onStart(() => {
-      switchToCircular();
-    });
-
-  // Race: dragging cancels the long press; holding 2 s cancels dragging
-  const combinedGesture = Gesture.Race(longPressGesture, panGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -140,42 +216,70 @@ export function MiniPlayer() {
       { translateY: translateY.value },
     ],
   }));
+  const deleteZoneStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(isDragging.value, { duration: 200 }),
+    transform: [{ scale: withSpring(isOverDeleteZone.value ? 1.03 : 1) }],
+    backgroundColor: isOverDeleteZone.value
+      ? "#FF3B30"
+      : "rgba(255, 59, 48, 0.12)",
+    borderColor: isOverDeleteZone.value
+      ? "#FF3B30"
+      : "rgba(255, 59, 48, 0.45)",
+  }));
 
   // Now check if book exists - after all hooks
   const book = playbackState.currentBook;
   if (!book || pathname.startsWith("/player")) return null;
 
   return (
-    <GestureDetector gesture={combinedGesture}>
+    <>
       <Animated.View
-        style={[styles.container, { bottom: bottomOffset }, animatedStyle]}
+        pointerEvents="none"
+        style={[
+          styles.deleteZoneBar,
+          {
+            left: DELETE_ZONE_SIDE_MARGIN,
+            right: DELETE_ZONE_SIDE_MARGIN,
+            bottom: deleteZoneBottom,
+          },
+          deleteZoneStyle,
+        ]}
       >
-        <View style={styles.wrapper}>
-          {/* Close button - positioned outside card */}
-          <CloseButton onPress={stopPlayback} />
-
-          <MiniPlayerInner />
+        <View style={styles.deleteZoneContent}>
+          <MaterialIcons
+            size={22}
+            name={isOverDeleteZoneState ? "delete" : "delete-outline"}
+            color={isOverDeleteZoneState ? "#FFFFFF" : "#FF3B30"}
+          />
+          <ThemedText
+            style={[
+              styles.deleteZoneText,
+              { color: isOverDeleteZoneState ? "#FFFFFF" : "#FF3B30" },
+            ]}
+          >
+            Drop here to close
+          </ThemedText>
         </View>
       </Animated.View>
-    </GestureDetector>
+
+      <GestureDetector gesture={panGesture}>
+        <Animated.View
+          style={[styles.container, { bottom: bottomOffset }, animatedStyle]}
+        >
+          <View style={styles.wrapper}>
+            <MiniPlayerInner onMinimum={() => setPlayerMode("circular")} />
+          </View>
+        </Animated.View>
+      </GestureDetector>
+    </>
   );
 }
 
-function CloseButton({ onPress }: { onPress: () => void }) {
-  return (
-    <Pressable
-      style={[styles.closeButton, { backgroundColor: "#FF3B30" }]}
-      onPress={(e) => {
-        e.stopPropagation();
-        onPress();
-      }}
-    >
-      <IconSymbol size={16} name="xmark" color="#FFFFFF" />
-    </Pressable>
-  );
-}
-
-function MiniPlayerInner() {
+function MiniPlayerInner({
+  onMinimum,
+}: {
+  onMinimum: () => void;
+}) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { playbackState, togglePlayPause, previousChapter, nextChapter } =
@@ -259,6 +363,16 @@ function MiniPlayerInner() {
           >
             <IconSymbol size={22} name="forward.fill" color={colors.text} />
           </Pressable>
+
+          <Pressable
+            style={[styles.minimumButton, { backgroundColor: buttonBgColor }]}
+            onPress={(e) => {
+              e.stopPropagation();
+              onMinimum();
+            }}
+          >
+            <MaterialIcons size={18} name="remove" color={colors.text} />
+          </Pressable>
         </View>
       </View>
 
@@ -340,16 +454,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  closeButton: {
-    position: "absolute",
-    top: -8,
-    right: -8,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  minimumButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10,
+  },
+  deleteZoneBar: {
+    position: "absolute",
+    height: DELETE_ZONE_HEIGHT,
+    borderRadius: 18,
+    borderWidth: 2,
+    justifyContent: "center",
+    zIndex: 1100,
+  },
+  deleteZoneContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+  },
+  deleteZoneText: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   timeContainer: {
     flexDirection: "row",
