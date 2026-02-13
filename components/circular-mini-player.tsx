@@ -187,15 +187,20 @@ export function CircularMiniPlayer() {
       scale.value = withSpring(1);
     });
 
-  // Long press (2 s) — switch back to bar mini-player
+  // Single tap — immediately switch to bar mini-player
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    switchToBar();
+  });
+
+  // Long press (2 s) — also switches to bar (kept for accessibility)
   const longPressGesture = Gesture.LongPress()
     .minDuration(2000)
     .onStart(() => {
       switchToBar();
     });
 
-  // Race: first recognised gesture wins
-  const combinedGesture = Gesture.Race(longPressGesture, panGesture);
+  // Race: tap on quick touch, longPress on hold, pan on movement
+  const combinedGesture = Gesture.Race(tapGesture, longPressGesture, panGesture);
 
   const playerStyle = useAnimatedStyle(() => ({
     transform: [
