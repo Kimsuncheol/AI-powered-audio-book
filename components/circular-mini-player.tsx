@@ -293,9 +293,16 @@ export function CircularMiniPlayer() {
   const book = playbackState.currentBook;
   if (!book || pathname.startsWith("/player")) return null;
 
-  const progress =
-    playbackState.duration > 0
-      ? playbackState.position / playbackState.duration
+  const safeDuration = Math.max(0, playbackState.duration);
+  const safePosition = Math.min(
+    Math.max(0, playbackState.position),
+    safeDuration,
+  );
+  const remainingSecondsRaw = safeDuration - safePosition;
+  const remainingSeconds = Math.max(0, Math.ceil(remainingSecondsRaw));
+  const remainingProgress =
+    safeDuration > 0
+      ? Math.max(0, Math.min(1, remainingSecondsRaw / safeDuration))
       : 0;
 
   const bgColor =
@@ -344,7 +351,7 @@ export function CircularMiniPlayer() {
             </View>
 
             <ProgressRing
-              progress={progress}
+              progress={remainingProgress}
               color={colors.tint}
               trackColor={
                 colorScheme === "dark"
@@ -366,8 +373,8 @@ export function CircularMiniPlayer() {
             </Animated.View>
           </View>
 
-          <ThemedText style={styles.duration}>
-            {formatTime(playbackState.duration)}
+          <ThemedText style={styles.remainingTime}>
+            {`-${formatTime(remainingSeconds)}`}
           </ThemedText>
         </Animated.View>
       </GestureDetector>
@@ -414,7 +421,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  duration: {
+  remainingTime: {
     fontSize: 10,
     marginTop: 5,
     opacity: 0.75,
