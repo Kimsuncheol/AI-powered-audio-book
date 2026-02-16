@@ -20,14 +20,14 @@ import Animated, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const CIRCLE_SIZE = 90;
+const CIRCLE_SIZE = SCREEN_WIDTH * 0.15;
 const STROKE_WIDTH = 4;
 const IMAGE_INSET = STROKE_WIDTH + 2;
 const IMAGE_SIZE = CIRCLE_SIZE - IMAGE_INSET * 2;
 const TAB_BAR_HEIGHT = 80;
 const INITIAL_RIGHT = 20;
 
-const DELETE_ZONE_SIZE = 76;
+const DELETE_ZONE_SIZE = CIRCLE_SIZE * 1.2;
 const DELETE_ZONE_RIGHT_MARGIN = 18;
 const DELETE_ZONE_BOTTOM_MARGIN_TABS = TAB_BAR_HEIGHT + 14;
 const DELETE_ZONE_BOTTOM_MARGIN_STACK = 24;
@@ -297,9 +297,7 @@ export function CircularMiniPlayer() {
 
   // Overlay background: a subtle dark tint on dark mode, slightly stronger on light mode
   const overlayBgColor =
-    colorScheme === "dark"
-      ? "rgba(0, 0, 0, 0.50)"
-      : "rgba(0, 0, 0, 0.35)";
+    colorScheme === "dark" ? "rgba(0, 0, 0, 0.50)" : "rgba(0, 0, 0, 0.35)";
 
   return (
     <>
