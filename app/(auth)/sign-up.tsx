@@ -6,11 +6,8 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 import { PasswordMatchIndicator } from "@/components/auth/PasswordMatchIndicator";
 import { PasswordRequirementsList } from "@/components/auth/PasswordRequirementsList";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
-import { RoleSelector } from "@/components/auth/RoleSelector";
 import { ThemedView } from "@/components/themed-view";
 import { useAuth } from "@/context/auth-context";
-import { UserRole } from "@/types/user";
-import { getRoleBasedRoute } from "@/utils/navigation";
 import {
   getPasswordStrength,
   validatePassword,
@@ -34,7 +31,6 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("user");
   const [loading, setLoading] = useState(false);
 
   const passwordValidation = validatePassword(password);
@@ -62,41 +58,14 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      await signUp(email, password, displayName, role);
-      const route = getRoleBasedRoute(role);
-      router.replace(route as any);
+      await signUp(email, password, displayName);
+      router.replace("/(tabs)");
     } catch (error: any) {
       Alert.alert("Sign Up Failed", error.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
-
-  const roles: {
-    value: UserRole;
-    label: string;
-    description: string;
-    icon: string;
-  }[] = [
-    {
-      value: "user",
-      label: "Listener",
-      description: "Enjoy audiobooks",
-      icon: "headphones",
-    },
-    {
-      value: "author",
-      label: "Author",
-      description: "Publish your audiobooks",
-      icon: "pencil",
-    },
-    {
-      value: "admin",
-      label: "Admin",
-      description: "Manage platform",
-      icon: "shield.fill",
-    },
-  ];
 
   return (
     <ThemedView style={styles.container}>
@@ -130,12 +99,6 @@ export default function SignUpScreen() {
                 placeholder="Enter your email"
                 keyboardType="email-address"
                 autoComplete="email"
-              />
-
-              <RoleSelector
-                selectedRole={role}
-                onSelectRole={setRole}
-                roles={roles}
               />
 
               <View style={styles.passwordSection}>

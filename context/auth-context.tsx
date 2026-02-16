@@ -10,14 +10,14 @@ import {
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '@/config/firebase';
-import { UserRole, UserProfile } from '@/types/user';
+import { UserProfile } from '@/types/user';
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
   isGuest: boolean;
-  signUp: (email: string, password: string, displayName: string, role: UserRole) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   enterGuestMode: () => Promise<void>;
@@ -27,6 +27,49 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const GUEST_MODE_KEY = '@auth:guestMode';
+
+function normalizeDate(value: unknown): Date {
+  if (value instanceof Date) return value;
+
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    'toDate' in value &&
+    typeof (value as { toDate?: unknown }).toDate === 'function'
+  ) {
+    return (value as { toDate: () => Date }).toDate();
+  }
+
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+  }
+
+  return new Date();
+}
+
+function normalizeUserProfile(rawData: unknown, user: User): UserProfile {
+  const data =
+    typeof rawData === 'object' && rawData !== null
+      ? (rawData as Record<string, unknown>)
+      : {};
+
+  return {
+    uid: user.uid,
+    email: typeof data.email === 'string' ? data.email : user.email || '',
+    displayName:
+      typeof data.displayName === 'string'
+        ? data.displayName
+        : user.displayName || '',
+    role: 'user',
+    createdAt: normalizeDate(data.createdAt),
+    updatedAt: normalizeDate(data.updatedAt),
+    photoURL: typeof data.photoURL === 'string' ? data.photoURL : undefined,
+    bio: typeof data.bio === 'string' ? data.bio : undefined,
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -45,7 +88,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Load user profile from Firestore
         const profileDoc = await getDoc(doc(db, 'users', user.uid));
         if (profileDoc.exists()) {
-          setUserProfile(profileDoc.data() as UserProfile);
+          setUserProfile(normalizeUserProfile(profileDoc.data(), user));
+        } else {
+          setUserProfile({
+            uid: user.uid,
+            email: user.email || '',
+            displayName: user.displayName || '',
+            role: 'user',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
         }
       } else {
         // No user logged in - automatically set guest mode
@@ -59,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, displayName: string, role: UserRole) => {
+  const signUp = async (email: string, password: string, displayName: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName });
 
@@ -68,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       uid: userCredential.user.uid,
       email,
       displayName,
-      role,
+      role: 'user',
       createdAt: new Date(),
       updatedAt: new Date(),
     };

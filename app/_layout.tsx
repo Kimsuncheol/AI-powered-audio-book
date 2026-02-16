@@ -53,8 +53,6 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(author-tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(admin-tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="book/[id]" options={{ headerShown: false }} />
         <Stack.Screen
           name="player"

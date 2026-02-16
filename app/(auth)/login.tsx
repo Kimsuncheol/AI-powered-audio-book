@@ -5,14 +5,9 @@ import { AuthInput } from "@/components/auth/AuthInput";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { RememberMeCheckbox } from "@/components/auth/RememberMeCheckbox";
 import { ThemedView } from "@/components/themed-view";
-import { auth, db } from "@/config/firebase";
 import { useAuth } from "@/context/auth-context";
-import { UserProfile } from "@/types/user";
-import { getRoleBasedRoute } from "@/utils/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { User, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -78,28 +73,7 @@ export default function LoginScreen() {
       }
 
       await signIn(email, password);
-
-      // Wait a bit for auth state to update
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Get user profile to determine role
-      const user = await new Promise<User | null>((resolve) => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-          unsubscribe();
-          resolve(user);
-        });
-      });
-
-      if (user) {
-        const profileDoc = await getDoc(doc(db, "users", user.uid));
-        if (profileDoc.exists()) {
-          const profile = profileDoc.data() as UserProfile;
-          const route = getRoleBasedRoute(profile.role);
-          router.replace(route as any);
-        } else {
-          router.replace("/(tabs)");
-        }
-      }
+      router.replace("/(tabs)");
     } catch (error: any) {
       Alert.alert("Login Failed", error.message || "Something went wrong");
     } finally {
