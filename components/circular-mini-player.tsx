@@ -33,7 +33,6 @@ const DELETE_ZONE_BOTTOM_MARGIN_TABS = TAB_BAR_HEIGHT + 14;
 const DELETE_ZONE_BOTTOM_MARGIN_STACK = 24;
 const DELETE_HIT_RADIUS = (CIRCLE_SIZE + DELETE_ZONE_SIZE) * 0.38;
 
-// Progress ring using the two-half-circle clip technique (no SVG needed).
 function ProgressRing({
   progress,
   color,
@@ -57,7 +56,6 @@ function ProgressRing({
         left: 0,
       }}
     >
-      {/* Track ring */}
       <View
         style={{
           position: "absolute",
@@ -68,8 +66,6 @@ function ProgressRing({
           borderColor: trackColor,
         }}
       />
-
-      {/* Right half clip */}
       <View
         style={{
           position: "absolute",
@@ -94,8 +90,6 @@ function ProgressRing({
           }}
         />
       </View>
-
-      {/* Left half clip */}
       <View
         style={{
           position: "absolute",
@@ -143,7 +137,6 @@ export function CircularMiniPlayer() {
   const initialCenterX = SCREEN_WIDTH - INITIAL_RIGHT - CIRCLE_SIZE / 2;
   const initialCenterY = SCREEN_HEIGHT - bottomOffset - CIRCLE_SIZE / 2;
 
-  // Shared values — all declared before any conditional return
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const offsetX = useSharedValue(0);
@@ -151,7 +144,8 @@ export function CircularMiniPlayer() {
   const isDragging = useSharedValue(0);
   const isOverDeleteZone = useSharedValue(0);
   const scale = useSharedValue(1);
-  const isTouching = useSharedValue(0); // 1 when finger is on the circle (hover)
+  // 1 = paused overlay visible, 0 = playing (hidden)
+  const pausedOverlay = useSharedValue(playbackState.isPlaying ? 0 : 1);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -159,6 +153,13 @@ export function CircularMiniPlayer() {
       isMountedRef.current = false;
     };
   }, []);
+
+  // Keep pausedOverlay in sync with playback state
+  useEffect(() => {
+    pausedOverlay.value = withTiming(playbackState.isPlaying ? 0 : 1, {
+      duration: 200,
+    });
+  }, [playbackState.isPlaying]);
 
   const setDeleteZoneActiveSafe = useCallback((active: boolean) => {
     if (!isMountedRef.current) return;
@@ -179,14 +180,11 @@ export function CircularMiniPlayer() {
     router.push({ pathname: "/player/[id]", params: { id: book.id } });
   }, [playbackState.currentBook]);
 
-  // Pan gesture — drag, snap to bounds, or drop into delete zone
   const panGesture = Gesture.Pan()
     .onBegin(() => {
       isDragging.value = 1;
       isOverDeleteZone.value = 0;
       scale.value = withSpring(1.12);
-      // Hide hover overlay once dragging starts
-      isTouching.value = withTiming(0, { duration: 100 });
       runOnJS(setDeleteZoneActiveSafe)(false);
     })
     .onUpdate((event) => {
@@ -243,37 +241,22 @@ export function CircularMiniPlayer() {
     .onFinalize(() => {
       isDragging.value = 0;
       isOverDeleteZone.value = 0;
-      isTouching.value = 0;
       scale.value = withSpring(1);
       runOnJS(setDeleteZoneActiveSafe)(false);
     });
 
-  // Short tap — show hover overlay on begin, toggle play/pause on end
-  const tapGesture = Gesture.Tap()
-    .onBegin(() => {
-      isTouching.value = withTiming(1, { duration: 100 });
-    })
-    .onEnd(() => {
-      runOnJS(handleTogglePlayPause)();
-    })
-    .onFinalize(() => {
-      isTouching.value = withTiming(0, { duration: 150 });
-    });
+  // Short tap — toggle play/pause
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    runOnJS(handleTogglePlayPause)();
+  });
 
-  // Long press — show hover overlay then open full player
+  // Long press — open full player
   const longPressGesture = Gesture.LongPress()
     .minDuration(500)
-    .onBegin(() => {
-      isTouching.value = withTiming(1, { duration: 100 });
-    })
     .onStart(() => {
       runOnJS(handleOpenPlayer)();
-    })
-    .onFinalize(() => {
-      isTouching.value = withTiming(0, { duration: 150 });
     });
 
-  // Race: tap on quick touch, longPress on hold, pan on movement
   const combinedGesture = Gesture.Race(
     tapGesture,
     longPressGesture,
@@ -297,11 +280,10 @@ export function CircularMiniPlayer() {
     borderColor: isOverDeleteZone.value ? "#FF3B30" : "rgba(255, 59, 48, 0.45)",
   }));
 
-  const hoverOverlayStyle = useAnimatedStyle(() => ({
-    opacity: isTouching.value,
+  const pausedOverlayStyle = useAnimatedStyle(() => ({
+    opacity: pausedOverlay.value,
   }));
 
-  // Conditional render after all hooks
   const book = playbackState.currentBook;
   if (!book || pathname.startsWith("/player")) return null;
 
@@ -313,9 +295,14 @@ export function CircularMiniPlayer() {
   const bgColor =
     colorScheme === "dark" ? "rgba(28,28,30,0.92)" : "rgba(242,242,247,0.92)";
 
+  // Overlay background: a subtle dark tint on dark mode, slightly stronger on light mode
+  const overlayBgColor =
+    colorScheme === "dark"
+      ? "rgba(0, 0, 0, 0.50)"
+      : "rgba(0, 0, 0, 0.35)";
+
   return (
     <>
-      {/* Floating delete zone — fades in while dragging */}
       <Animated.View
         pointerEvents="none"
         style={[
@@ -335,7 +322,6 @@ export function CircularMiniPlayer() {
         />
       </Animated.View>
 
-      {/* Circular player */}
       <GestureDetector gesture={combinedGesture}>
         <Animated.View
           style={[
@@ -344,9 +330,7 @@ export function CircularMiniPlayer() {
             playerStyle,
           ]}
         >
-          {/* Outer ring container */}
           <View style={[styles.ringContainer, { backgroundColor: bgColor }]}>
-            {/* Book cover */}
             <View style={styles.imageContainer}>
               <Image
                 source={{ uri: book.coverImage }}
@@ -355,23 +339,21 @@ export function CircularMiniPlayer() {
               />
             </View>
 
-            {/* Animated progress ring */}
             <ProgressRing progress={progress} color={colors.tint} />
 
-            {/* Hover overlay — shows play/pause icon on touch */}
+            {/* Paused overlay — visible only when not playing */}
             <Animated.View
               pointerEvents="none"
-              style={[styles.hoverOverlay, hoverOverlayStyle]}
+              style={[
+                styles.pausedOverlay,
+                { backgroundColor: overlayBgColor },
+                pausedOverlayStyle,
+              ]}
             >
-              <MaterialIcons
-                size={32}
-                name={playbackState.isPlaying ? "pause" : "play-arrow"}
-                color="#FFFFFF"
-              />
+              <MaterialIcons size={32} name="play-arrow" color="#FFFFFF" />
             </Animated.View>
           </View>
 
-          {/* Duration label below circle */}
           <ThemedText style={styles.duration}>
             {formatTime(playbackState.duration)}
           </ThemedText>
@@ -410,14 +392,13 @@ const styles = StyleSheet.create({
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
   },
-  hoverOverlay: {
+  pausedOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
     justifyContent: "center",
     alignItems: "center",
   },
