@@ -2,12 +2,11 @@ import { DeleteZoneStripes } from "@/components/shared/DeleteZoneStripes";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
-import { usePlayerMode } from "@/context/player-mode-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
-import { usePathname, useSegments } from "expo-router";
+import { router, usePathname, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -35,9 +34,6 @@ const DELETE_ZONE_BOTTOM_MARGIN_STACK = 24;
 const DELETE_HIT_RADIUS = (CIRCLE_SIZE + DELETE_ZONE_SIZE) * 0.38;
 
 // Progress ring using the two-half-circle clip technique (no SVG needed).
-// The full ring is split into left and right halves, each clipped by an
-// overflow:hidden container. Rotating the inner circle within each clip
-// progressively reveals the arc.
 function ProgressRing({
   progress,
   color,
@@ -48,9 +44,7 @@ function ProgressRing({
   const size = CIRCLE_SIZE;
   const trackColor = "rgba(255,255,255,0.3)";
 
-  // Right half: reveals as progress goes 0 → 0.5
   const rightRotation = Math.min(progress, 0.5) * 360 - 180;
-  // Left half: reveals as progress goes 0.5 → 1.0
   const leftRotation = Math.max(0, progress - 0.5) * 360 - 180;
 
   return (
@@ -75,7 +69,7 @@ function ProgressRing({
         }}
       />
 
-      {/* Right half clip — reveals the clockwise arc from 12 o'clock to 6 */}
+      {/* Right half clip */}
       <View
         style={{
           position: "absolute",
@@ -89,7 +83,7 @@ function ProgressRing({
         <View
           style={{
             position: "absolute",
-            left: -(size / 2), // align inner circle's center with clip's left edge
+            left: -(size / 2),
             top: 0,
             width: size,
             height: size,
@@ -101,7 +95,7 @@ function ProgressRing({
         />
       </View>
 
-      {/* Left half clip — reveals the clockwise arc from 6 o'clock to 12 */}
+      {/* Left half clip */}
       <View
         style={{
           position: "absolute",
@@ -115,7 +109,7 @@ function ProgressRing({
         <View
           style={{
             position: "absolute",
-            right: -(size / 2), // align inner circle's center with clip's right edge
+            right: -(size / 2),
             top: 0,
             width: size,
             height: size,
@@ -131,8 +125,7 @@ function ProgressRing({
 }
 
 export function CircularMiniPlayer() {
-  const { playbackState, stopPlayback } = useAudioPlayer();
-  const { setPlayerMode } = usePlayerMode();
+  const { playbackState, stopPlayback, togglePlayPause } = useAudioPlayer();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const segments = useSegments();
@@ -147,7 +140,6 @@ export function CircularMiniPlayer() {
     ? DELETE_ZONE_BOTTOM_MARGIN_TABS
     : DELETE_ZONE_BOTTOM_MARGIN_STACK;
 
-  // Initial absolute center (used for delete-zone hit test)
   const initialCenterX = SCREEN_WIDTH - INITIAL_RIGHT - CIRCLE_SIZE / 2;
   const initialCenterY = SCREEN_HEIGHT - bottomOffset - CIRCLE_SIZE / 2;
 
@@ -156,9 +148,10 @@ export function CircularMiniPlayer() {
   const translateY = useSharedValue(0);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
-  const isDragging = useSharedValue(0); // 0 = idle, 1 = dragging
+  const isDragging = useSharedValue(0);
   const isOverDeleteZone = useSharedValue(0);
   const scale = useSharedValue(1);
+  const isTouching = useSharedValue(0); // 1 when finger is on the circle (hover)
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -172,14 +165,19 @@ export function CircularMiniPlayer() {
     setIsOverDeleteZoneState(active);
   }, []);
 
-  const handleSwitchToBar = useCallback(() => {
-    setPlayerMode("bar");
-  }, [setPlayerMode]);
-
   const handleDismiss = useCallback(() => {
-    setPlayerMode("bar");
     void stopPlayback();
-  }, [setPlayerMode, stopPlayback]);
+  }, [stopPlayback]);
+
+  const handleTogglePlayPause = useCallback(() => {
+    togglePlayPause();
+  }, [togglePlayPause]);
+
+  const handleOpenPlayer = useCallback(() => {
+    const book = playbackState.currentBook;
+    if (!book) return;
+    router.push({ pathname: "/player/[id]", params: { id: book.id } });
+  }, [playbackState.currentBook]);
 
   // Pan gesture — drag, snap to bounds, or drop into delete zone
   const panGesture = Gesture.Pan()
@@ -187,6 +185,8 @@ export function CircularMiniPlayer() {
       isDragging.value = 1;
       isOverDeleteZone.value = 0;
       scale.value = withSpring(1.12);
+      // Hide hover overlay once dragging starts
+      isTouching.value = withTiming(0, { duration: 100 });
       runOnJS(setDeleteZoneActiveSafe)(false);
     })
     .onUpdate((event) => {
@@ -225,7 +225,6 @@ export function CircularMiniPlayer() {
         return;
       }
 
-      // Clamp to screen bounds with padding
       const pad = CIRCLE_SIZE / 2 + 8;
       const clampedX = Math.max(pad, Math.min(SCREEN_WIDTH - pad, absCenterX));
       const clampedY = Math.max(
@@ -244,20 +243,34 @@ export function CircularMiniPlayer() {
     .onFinalize(() => {
       isDragging.value = 0;
       isOverDeleteZone.value = 0;
+      isTouching.value = 0;
       scale.value = withSpring(1);
       runOnJS(setDeleteZoneActiveSafe)(false);
     });
 
-  // Single tap — immediately switch to bar mini-player
-  const tapGesture = Gesture.Tap().onEnd(() => {
-    runOnJS(handleSwitchToBar)();
-  });
+  // Short tap — show hover overlay on begin, toggle play/pause on end
+  const tapGesture = Gesture.Tap()
+    .onBegin(() => {
+      isTouching.value = withTiming(1, { duration: 100 });
+    })
+    .onEnd(() => {
+      runOnJS(handleTogglePlayPause)();
+    })
+    .onFinalize(() => {
+      isTouching.value = withTiming(0, { duration: 150 });
+    });
 
-  // Long press (2 s) — also switches to bar (kept for accessibility)
+  // Long press — show hover overlay then open full player
   const longPressGesture = Gesture.LongPress()
-    .minDuration(2000)
+    .minDuration(500)
+    .onBegin(() => {
+      isTouching.value = withTiming(1, { duration: 100 });
+    })
     .onStart(() => {
-      runOnJS(handleSwitchToBar)();
+      runOnJS(handleOpenPlayer)();
+    })
+    .onFinalize(() => {
+      isTouching.value = withTiming(0, { duration: 150 });
     });
 
   // Race: tap on quick touch, longPress on hold, pan on movement
@@ -282,6 +295,10 @@ export function CircularMiniPlayer() {
       ? "#FF3B30"
       : "rgba(255, 59, 48, 0.12)",
     borderColor: isOverDeleteZone.value ? "#FF3B30" : "rgba(255, 59, 48, 0.45)",
+  }));
+
+  const hoverOverlayStyle = useAnimatedStyle(() => ({
+    opacity: isTouching.value,
   }));
 
   // Conditional render after all hooks
@@ -338,8 +355,20 @@ export function CircularMiniPlayer() {
               />
             </View>
 
-            {/* Animated progress ring — sits on top, no overflow clip */}
+            {/* Animated progress ring */}
             <ProgressRing progress={progress} color={colors.tint} />
+
+            {/* Hover overlay — shows play/pause icon on touch */}
+            <Animated.View
+              pointerEvents="none"
+              style={[styles.hoverOverlay, hoverOverlayStyle]}
+            >
+              <MaterialIcons
+                size={32}
+                name={playbackState.isPlaying ? "pause" : "play-arrow"}
+                color="#FFFFFF"
+              />
+            </Animated.View>
           </View>
 
           {/* Duration label below circle */}
@@ -362,7 +391,6 @@ const styles = StyleSheet.create({
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
-    // Shadow
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -381,6 +409,17 @@ const styles = StyleSheet.create({
   cover: {
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
+  },
+  hoverOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: CIRCLE_SIZE,
+    height: CIRCLE_SIZE,
+    borderRadius: CIRCLE_SIZE / 2,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   duration: {
     fontSize: 10,
