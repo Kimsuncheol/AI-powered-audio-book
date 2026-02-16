@@ -20,10 +20,12 @@ import Animated, {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-const CIRCLE_SIZE = SCREEN_WIDTH * 0.15;
-const STROKE_WIDTH = 4;
-const IMAGE_INSET = STROKE_WIDTH + 2;
-const IMAGE_SIZE = CIRCLE_SIZE - IMAGE_INSET * 2;
+const RING_STROKE = 5; // progress arc thickness
+const RING_GAP = 3; // gap between ring and image edge
+const IMAGE_DIAMETER = SCREEN_WIDTH * 0.15; // the cover image circle
+const CIRCLE_SIZE = IMAGE_DIAMETER + (RING_STROKE + RING_GAP) * 2; // total widget size
+const IMAGE_INSET = RING_STROKE + RING_GAP; // image starts this far from outer edge
+const IMAGE_SIZE = IMAGE_DIAMETER;
 const TAB_BAR_HEIGHT = 80;
 const INITIAL_RIGHT = 20;
 
@@ -36,12 +38,13 @@ const DELETE_HIT_RADIUS = (CIRCLE_SIZE + DELETE_ZONE_SIZE) * 0.38;
 function ProgressRing({
   progress,
   color,
+  trackColor,
 }: {
   progress: number;
   color: string;
+  trackColor: string;
 }) {
   const size = CIRCLE_SIZE;
-  const trackColor = "rgba(255,255,255,0.3)";
 
   const rightRotation = Math.min(progress, 0.5) * 360 - 180;
   const leftRotation = Math.max(0, progress - 0.5) * 360 - 180;
@@ -56,16 +59,18 @@ function ProgressRing({
         left: 0,
       }}
     >
+      {/* Track */}
       <View
         style={{
           position: "absolute",
           width: size,
           height: size,
           borderRadius: size / 2,
-          borderWidth: STROKE_WIDTH,
+          borderWidth: RING_STROKE,
           borderColor: trackColor,
         }}
       />
+      {/* Right half arc */}
       <View
         style={{
           position: "absolute",
@@ -84,12 +89,13 @@ function ProgressRing({
             width: size,
             height: size,
             borderRadius: size / 2,
-            borderWidth: STROKE_WIDTH,
+            borderWidth: RING_STROKE,
             borderColor: color,
             transform: [{ rotate: `${rightRotation}deg` }],
           }}
         />
       </View>
+      {/* Left half arc */}
       <View
         style={{
           position: "absolute",
@@ -108,7 +114,7 @@ function ProgressRing({
             width: size,
             height: size,
             borderRadius: size / 2,
-            borderWidth: STROKE_WIDTH,
+            borderWidth: RING_STROKE,
             borderColor: color,
             transform: [{ rotate: `${leftRotation}deg` }],
           }}
@@ -337,7 +343,15 @@ export function CircularMiniPlayer() {
               />
             </View>
 
-            <ProgressRing progress={progress} color={colors.tint} />
+            <ProgressRing
+              progress={progress}
+              color={colors.tint}
+              trackColor={
+                colorScheme === "dark"
+                  ? "rgba(255,255,255,0.15)"
+                  : "rgba(0,0,0,0.12)"
+              }
+            />
 
             {/* Paused overlay — visible only when not playing */}
             <Animated.View
