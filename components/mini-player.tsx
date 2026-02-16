@@ -1,4 +1,4 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { DeleteZoneStripes } from "@/components/shared/DeleteZoneStripes";
 import { ProgressBar } from "@/components/shared/ProgressBar";
 import { ThemedText } from "@/components/themed-text";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -7,6 +7,7 @@ import { useAudioPlayer } from "@/context/audio-player-context";
 import { usePlayerMode } from "@/context/player-mode-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import { router, usePathname, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -222,9 +223,7 @@ export function MiniPlayer() {
     backgroundColor: isOverDeleteZone.value
       ? "#FF3B30"
       : "rgba(255, 59, 48, 0.12)",
-    borderColor: isOverDeleteZone.value
-      ? "#FF3B30"
-      : "rgba(255, 59, 48, 0.45)",
+    borderColor: isOverDeleteZone.value ? "#FF3B30" : "rgba(255, 59, 48, 0.45)",
   }));
 
   // Now check if book exists - after all hooks
@@ -260,6 +259,7 @@ export function MiniPlayer() {
             Drop here to close
           </ThemedText>
         </View>
+        <DeleteZoneStripes active={isOverDeleteZoneState} borderRadius={18} />
       </Animated.View>
 
       <GestureDetector gesture={panGesture}>
@@ -275,11 +275,7 @@ export function MiniPlayer() {
   );
 }
 
-function MiniPlayerInner({
-  onMinimum,
-}: {
-  onMinimum: () => void;
-}) {
+function MiniPlayerInner({ onMinimum }: { onMinimum: () => void }) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const { playbackState, togglePlayPause, previousChapter, nextChapter } =

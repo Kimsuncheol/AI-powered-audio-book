@@ -1,10 +1,11 @@
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { DeleteZoneStripes } from "@/components/shared/DeleteZoneStripes";
 import { ThemedText } from "@/components/themed-text";
 import { Colors } from "@/constants/theme";
 import { useAudioPlayer } from "@/context/audio-player-context";
 import { usePlayerMode } from "@/context/player-mode-context";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
 import { usePathname, useSegments } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -54,7 +55,13 @@ function ProgressRing({
 
   return (
     <View
-      style={{ width: size, height: size, position: "absolute", top: 0, left: 0 }}
+      style={{
+        width: size,
+        height: size,
+        position: "absolute",
+        top: 0,
+        left: 0,
+      }}
     >
       {/* Track ring */}
       <View
@@ -189,7 +196,8 @@ export function CircularMiniPlayer() {
       const absCenterX = initialCenterX + translateX.value;
       const absCenterY = initialCenterY + translateY.value;
       const zoneCenterX = SCREEN_WIDTH - deleteZoneRight - DELETE_ZONE_SIZE / 2;
-      const zoneCenterY = SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
+      const zoneCenterY =
+        SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
 
       const dx = absCenterX - zoneCenterX;
       const dy = absCenterY - zoneCenterY;
@@ -206,7 +214,8 @@ export function CircularMiniPlayer() {
       const absCenterX = initialCenterX + translateX.value;
       const absCenterY = initialCenterY + translateY.value;
       const zoneCenterX = SCREEN_WIDTH - deleteZoneRight - DELETE_ZONE_SIZE / 2;
-      const zoneCenterY = SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
+      const zoneCenterY =
+        SCREEN_HEIGHT - deleteZoneBottom - DELETE_ZONE_SIZE / 2;
       const dx = absCenterX - zoneCenterX;
       const dy = absCenterY - zoneCenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -219,7 +228,10 @@ export function CircularMiniPlayer() {
       // Clamp to screen bounds with padding
       const pad = CIRCLE_SIZE / 2 + 8;
       const clampedX = Math.max(pad, Math.min(SCREEN_WIDTH - pad, absCenterX));
-      const clampedY = Math.max(pad + 40, Math.min(SCREEN_HEIGHT - pad, absCenterY));
+      const clampedY = Math.max(
+        pad + 40,
+        Math.min(SCREEN_HEIGHT - pad, absCenterY),
+      );
 
       const finalX = clampedX - initialCenterX;
       const finalY = clampedY - initialCenterY;
@@ -249,7 +261,11 @@ export function CircularMiniPlayer() {
     });
 
   // Race: tap on quick touch, longPress on hold, pan on movement
-  const combinedGesture = Gesture.Race(tapGesture, longPressGesture, panGesture);
+  const combinedGesture = Gesture.Race(
+    tapGesture,
+    longPressGesture,
+    panGesture,
+  );
 
   const playerStyle = useAnimatedStyle(() => ({
     transform: [
@@ -265,9 +281,7 @@ export function CircularMiniPlayer() {
     backgroundColor: isOverDeleteZone.value
       ? "#FF3B30"
       : "rgba(255, 59, 48, 0.12)",
-    borderColor: isOverDeleteZone.value
-      ? "#FF3B30"
-      : "rgba(255, 59, 48, 0.45)",
+    borderColor: isOverDeleteZone.value ? "#FF3B30" : "rgba(255, 59, 48, 0.45)",
   }));
 
   // Conditional render after all hooks
@@ -279,7 +293,8 @@ export function CircularMiniPlayer() {
       ? playbackState.position / playbackState.duration
       : 0;
 
-  const bgColor = colorScheme === "dark" ? "rgba(28,28,30,0.92)" : "rgba(242,242,247,0.92)";
+  const bgColor =
+    colorScheme === "dark" ? "rgba(28,28,30,0.92)" : "rgba(242,242,247,0.92)";
 
   return (
     <>
@@ -296,6 +311,10 @@ export function CircularMiniPlayer() {
           size={28}
           name={isOverDeleteZoneState ? "delete" : "delete-outline"}
           color={isOverDeleteZoneState ? "#FFFFFF" : "#FF3B30"}
+        />
+        <DeleteZoneStripes
+          active={isOverDeleteZoneState}
+          borderRadius={DELETE_ZONE_SIZE / 2}
         />
       </Animated.View>
 
