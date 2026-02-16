@@ -6,15 +6,9 @@ import { useColorScheme } from "@/hooks/use-color-scheme";
 import { formatTime } from "@/utils/time";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { Image } from "expo-image";
-import * as Haptics from "expo-haptics";
 import { router, usePathname, useSegments } from "expo-router";
-import { useCallback, useEffect } from "react";
-import {
-  ActivityIndicator,
-  Dimensions,
-  StyleSheet,
-  View,
-} from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Dimensions, StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   runOnJS,
@@ -32,7 +26,6 @@ const IMAGE_INSET = STROKE_WIDTH + 2;
 const IMAGE_SIZE = CIRCLE_SIZE - IMAGE_INSET * 2;
 const TAB_BAR_HEIGHT = 80;
 const INITIAL_RIGHT = 20;
-const EDGE_PAD = CIRCLE_SIZE / 2 + 8;
 
 const DELETE_ZONE_SIZE = 76;
 const DELETE_ZONE_RIGHT_MARGIN = 18;
@@ -125,15 +118,14 @@ function ProgressRing({
   );
 }
 
-const hapticHeavy = () =>
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
 export function CircularMiniPlayer() {
   const { playbackState, stopPlayback, togglePlayPause } = useAudioPlayer();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? "light"];
   const segments = useSegments();
   const pathname = usePathname();
+  const [isOverDeleteZoneState, setIsOverDeleteZoneState] = useState(false);
+  const isMountedRef = useRef(true);
 
   const isInTabs = segments[0] === "(tabs)";
   const bottomOffset = isInTabs ? TAB_BAR_HEIGHT + 20 : 40;
@@ -152,27 +144,39 @@ export function CircularMiniPlayer() {
   const isDragging = useSharedValue(0);
   const isOverDeleteZone = useSharedValue(0);
   const scale = useSharedValue(1);
+  // 1 = paused overlay visible, 0 = playing (hidden)
   const pausedOverlay = useSharedValue(playbackState.isPlaying ? 0 : 1);
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Keep pausedOverlay in sync with playback state
   useEffect(() => {
     pausedOverlay.value = withTiming(playbackState.isPlaying ? 0 : 1, {
       duration: 200,
     });
   }, [playbackState.isPlaying]);
 
+  const setDeleteZoneActiveSafe = useCallback((active: boolean) => {
+    if (!isMountedRef.current) return;
+    setIsOverDeleteZoneState(active);
+  }, []);
+
   const handleDismiss = useCallback(() => {
     void stopPlayback();
   }, [stopPlayback]);
 
   const handleTogglePlayPause = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     togglePlayPause();
   }, [togglePlayPause]);
 
   const handleOpenPlayer = useCallback(() => {
     const book = playbackState.currentBook;
     if (!book) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push({ pathname: "/player/[id]", params: { id: book.id } });
   }, [playbackState.currentBook]);
 
@@ -181,6 +185,7 @@ export function CircularMiniPlayer() {
       isDragging.value = 1;
       isOverDeleteZone.value = 0;
       scale.value = withSpring(1.12);
+      runOnJS(setDeleteZoneActiveSafe)(false);
     })
     .onUpdate((event) => {
       translateX.value = offsetX.value + event.translationX;
@@ -195,14 +200,12 @@ export function CircularMiniPlayer() {
       const dx = absCenterX - zoneCenterX;
       const dy = absCenterY - zoneCenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const nextOverDelete = distance <= DELETE_HIT_RADIUS ? 1 : 0;
+      const insideDeleteZone = distance <= DELETE_HIT_RADIUS;
+      const nextOverDelete = insideDeleteZone ? 1 : 0;
 
       if (isOverDeleteZone.value !== nextOverDelete) {
         isOverDeleteZone.value = nextOverDelete;
-        // Haptics must cross to JS thread — only usage of runOnJS
-        if (nextOverDelete === 1) {
-          runOnJS(hapticHeavy)();
-        }
+        runOnJS(setDeleteZoneActiveSafe)(insideDeleteZone);
       }
     })
     .onEnd(() => {
@@ -216,25 +219,22 @@ export function CircularMiniPlayer() {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance <= DELETE_HIT_RADIUS) {
-        handleDismiss();
+        runOnJS(handleDismiss)();
         return;
       }
 
-      const snappedX =
-        absCenterX >= SCREEN_WIDTH / 2
-          ? SCREEN_WIDTH - EDGE_PAD
-          : EDGE_PAD;
-
+      const pad = CIRCLE_SIZE / 2 + 8;
+      const clampedX = Math.max(pad, Math.min(SCREEN_WIDTH - pad, absCenterX));
       const clampedY = Math.max(
-        EDGE_PAD + 40,
-        Math.min(SCREEN_HEIGHT - EDGE_PAD, absCenterY),
+        pad + 40,
+        Math.min(SCREEN_HEIGHT - pad, absCenterY),
       );
 
-      const finalX = snappedX - initialCenterX;
+      const finalX = clampedX - initialCenterX;
       const finalY = clampedY - initialCenterY;
 
-      translateX.value = withSpring(finalX, { damping: 20, stiffness: 200 });
-      translateY.value = withSpring(finalY, { damping: 20, stiffness: 200 });
+      translateX.value = withSpring(finalX);
+      translateY.value = withSpring(finalY);
       offsetX.value = finalX;
       offsetY.value = finalY;
     })
@@ -242,19 +242,19 @@ export function CircularMiniPlayer() {
       isDragging.value = 0;
       isOverDeleteZone.value = 0;
       scale.value = withSpring(1);
+      runOnJS(setDeleteZoneActiveSafe)(false);
     });
 
-  const tapGesture = Gesture.Tap()
-    .runOnJS(true)
-    .onEnd(() => {
-      handleTogglePlayPause();
-    });
+  // Short tap — toggle play/pause
+  const tapGesture = Gesture.Tap().onEnd(() => {
+    runOnJS(handleTogglePlayPause)();
+  });
 
+  // Long press — open full player
   const longPressGesture = Gesture.LongPress()
     .minDuration(500)
-    .runOnJS(true)
     .onStart(() => {
-      handleOpenPlayer();
+      runOnJS(handleOpenPlayer)();
     });
 
   const combinedGesture = Gesture.Race(
@@ -280,24 +280,12 @@ export function CircularMiniPlayer() {
     borderColor: isOverDeleteZone.value ? "#FF3B30" : "rgba(255, 59, 48, 0.45)",
   }));
 
-  // Animated icon swap — no JS state needed
-  const deleteIconActiveStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(isOverDeleteZone.value, { duration: 150 }),
-    position: "absolute",
-  }));
-  const deleteIconInactiveStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(1 - isOverDeleteZone.value, { duration: 150 }),
-    position: "absolute",
-  }));
-
   const pausedOverlayStyle = useAnimatedStyle(() => ({
     opacity: pausedOverlay.value,
   }));
 
   const book = playbackState.currentBook;
   if (!book || pathname.startsWith("/player")) return null;
-
-  const isBuffering = playbackState.duration === 0;
 
   const progress =
     playbackState.duration > 0
@@ -307,10 +295,11 @@ export function CircularMiniPlayer() {
   const bgColor =
     colorScheme === "dark" ? "rgba(28,28,30,0.92)" : "rgba(242,242,247,0.92)";
 
+  // Overlay background: a subtle dark tint on dark mode, slightly stronger on light mode
   const overlayBgColor =
-    colorScheme === "dark" ? "rgba(0, 0, 0, 0.50)" : "rgba(0, 0, 0, 0.35)";
-
-  const remainingTime = playbackState.duration - playbackState.position;
+    colorScheme === "dark"
+      ? "rgba(0, 0, 0, 0.50)"
+      : "rgba(0, 0, 0, 0.35)";
 
   return (
     <>
@@ -322,21 +311,15 @@ export function CircularMiniPlayer() {
           deleteZoneStyle,
         ]}
       >
-        {/* Inactive icon + stripes — fades out as player enters zone */}
-        <Animated.View style={deleteIconInactiveStyle}>
-          <MaterialIcons size={28} name="delete-outline" color="#FF3B30" />
-        </Animated.View>
-        {/* Active icon — fades in as player enters zone */}
-        <Animated.View style={deleteIconActiveStyle}>
-          <MaterialIcons size={28} name="delete" color="#FFFFFF" />
-        </Animated.View>
-        {/* Stripes hidden when active via parent opacity animation */}
-        <Animated.View
-          pointerEvents="none"
-          style={[StyleSheet.absoluteFill, deleteIconInactiveStyle]}
-        >
-          <DeleteZoneStripes active={false} borderRadius={DELETE_ZONE_SIZE / 2} />
-        </Animated.View>
+        <MaterialIcons
+          size={28}
+          name={isOverDeleteZoneState ? "delete" : "delete-outline"}
+          color={isOverDeleteZoneState ? "#FFFFFF" : "#FF3B30"}
+        />
+        <DeleteZoneStripes
+          active={isOverDeleteZoneState}
+          borderRadius={DELETE_ZONE_SIZE / 2}
+        />
       </Animated.View>
 
       <GestureDetector gesture={combinedGesture}>
@@ -358,35 +341,21 @@ export function CircularMiniPlayer() {
 
             <ProgressRing progress={progress} color={colors.tint} />
 
-            {/* Buffering overlay */}
-            {isBuffering && (
-              <View
-                style={[
-                  styles.statusOverlay,
-                  { backgroundColor: overlayBgColor },
-                ]}
-              >
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              </View>
-            )}
-
-            {/* Paused overlay — visible only when paused and not buffering */}
-            {!isBuffering && (
-              <Animated.View
-                pointerEvents="none"
-                style={[
-                  styles.statusOverlay,
-                  { backgroundColor: overlayBgColor },
-                  pausedOverlayStyle,
-                ]}
-              >
-                <MaterialIcons size={32} name="play-arrow" color="#FFFFFF" />
-              </Animated.View>
-            )}
+            {/* Paused overlay — visible only when not playing */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.pausedOverlay,
+                { backgroundColor: overlayBgColor },
+                pausedOverlayStyle,
+              ]}
+            >
+              <MaterialIcons size={32} name="play-arrow" color="#FFFFFF" />
+            </Animated.View>
           </View>
 
           <ThemedText style={styles.duration}>
-            {isBuffering ? "..." : `-${formatTime(remainingTime)}`}
+            {formatTime(playbackState.duration)}
           </ThemedText>
         </Animated.View>
       </GestureDetector>
@@ -423,7 +392,7 @@ const styles = StyleSheet.create({
     width: IMAGE_SIZE,
     height: IMAGE_SIZE,
   },
-  statusOverlay: {
+  pausedOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
