@@ -4,13 +4,18 @@ import { AuthHeader } from "@/components/auth/AuthHeader";
 import { AuthInput } from "@/components/auth/AuthInput";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { RememberMeCheckbox } from "@/components/auth/RememberMeCheckbox";
+import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useAuth } from "@/context/auth-context";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import {
+  getLoginErrorMessage,
+  LOGIN_REQUIRED_FIELDS_MESSAGE,
+} from "@/utils/auth-error";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -22,12 +27,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const REMEMBER_EMAIL_KEY = "@auth:remember_email";
 
 export default function LoginScreen() {
+  const colorScheme = useColorScheme();
   const { signIn } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const errorBackgroundColor = colorScheme === "dark" ? "#3A1F22" : "#FDECEC";
+  const errorBorderColor = colorScheme === "dark" ? "#6E2D35" : "#F5C2C7";
 
   // Load saved email on mount
   useEffect(() => {
@@ -59,9 +69,25 @@ export default function LoginScreen() {
     }
   };
 
+  const handleEmailChange = (text: string) => {
+    if (authError) {
+      setAuthError(null);
+    }
+    setEmail(text);
+  };
+
+  const handlePasswordChange = (text: string) => {
+    if (authError) {
+      setAuthError(null);
+    }
+    setPassword(text);
+  };
+
   const handleLogin = async () => {
+    setAuthError(null);
+
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      setAuthError(LOGIN_REQUIRED_FIELDS_MESSAGE);
       return;
     }
 
@@ -74,8 +100,8 @@ export default function LoginScreen() {
 
       await signIn(email, password);
       router.replace("/(tabs)");
-    } catch (error: any) {
-      Alert.alert("Login Failed", error.message || "Something went wrong");
+    } catch (error: unknown) {
+      setAuthError(getLoginErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -98,7 +124,7 @@ export default function LoginScreen() {
               <AuthInput
                 label="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={handleEmailChange}
                 placeholder="Enter your email"
                 keyboardType="email-address"
                 autoComplete="email"
@@ -107,7 +133,7 @@ export default function LoginScreen() {
               <PasswordInput
                 label="Password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 placeholder="Enter your password"
                 autoComplete="password"
               />
@@ -116,6 +142,26 @@ export default function LoginScreen() {
                 checked={rememberMe}
                 onToggle={handleRememberMeToggle}
               />
+
+              {authError ? (
+                <View
+                  style={[
+                    styles.errorBanner,
+                    {
+                      backgroundColor: errorBackgroundColor,
+                      borderColor: errorBorderColor,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={styles.errorText}
+                    lightColor="#B42318"
+                    darkColor="#FCA5A5"
+                  >
+                    {authError}
+                  </ThemedText>
+                </View>
+              ) : null}
 
               <AuthButton onPress={handleLogin} loading={loading}>
                 {loading ? "Logging in..." : "Log In"}
@@ -147,5 +193,15 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 20,
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
